@@ -5,3 +5,6 @@ Em Linux, dê
     sudo apt install -y liballegro5-dev
 e simplesmente rode
     ./all
+
+
+Alterado!
