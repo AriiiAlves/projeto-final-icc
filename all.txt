@@ -1,0 +1,8 @@
+# Necessary project commands and libs
+
+sudo apt update
+sudo apt install liballegro5-dev liballegro-audio5-dev liballegro-acodec5-dev
+
+# Compile the program with the following command (inside the project folder)
+
+gcc src/main.c -o ./bin/Release/pacman -Wall -g $(pkg-config --cflags --libs allegro-5 allegro_main-5 allegro_font-5 allegro_ttf-5 allegro_image-5 allegro_audio-5 allegro_acodec-5 allegro_primitives-5) && cd bin/Release && ./pacman && cd ../..
