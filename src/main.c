@@ -26,13 +26,23 @@ struct image {
 	int w, h;
 };
 
+typedef struct Map Map;
+struct Map {
+	int **m;
+	int w, h;
+	int x_i, x_f, y_i, y_f;
+	double x_fac, y_fac;
+};
+
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
 int menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height);
 void menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select);
-int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, int ***map, int *map_w, int *map_h);
+int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map);
 void choose_map_menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select, image *thumbs, int *thumbs_n);
-int** get_map (int map_id, int *w_map, int *h_map);
-void free_map (int ***map, int w_map);
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map* map, ALLEGRO_FONT *font, int width, int height);
+void game_show (Map* map, ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select);
+void get_map (int map_id, Map *map);
+void free_map (Map *map);
 
 int main() {
 	ALLEGRO_DISPLAY *display;
@@ -66,7 +76,8 @@ int main() {
 
 	// Variáveis de controle da aplicaçãoa
 	int menu_id = 0;
-	int **map = NULL, map_w, map_h;
+//	printf("%dx%d\n", width, height);
+	Map map = (Map){NULL, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0};
 	bool running = true;      // Indica se a aplicação deve continuar executando
 //	bool redraw = true;       // Indica se a tela precisa ser redesenhada
 //	bool hover = false;       // Indica se o mouse está sobre o botão
@@ -92,12 +103,12 @@ int main() {
 			menu_id = menu(&ev, &queue, &running, font, width, height);
 			break;
 		case 1:
-			if (map == NULL)
-				get_map(0, &map_w, &map_h);
-			running = false;
+			if (map.m == NULL)
+				get_map(0, &map);
+			menu_id = game(&ev, &queue, &running, &map, font, width, height);
 			break;
 		case 2:
-			menu_id = choose_map_menu(&ev, &queue, &running, font, width, height, &map, &map_w, &map_h);
+			menu_id = choose_map_menu(&ev, &queue, &running, font, width, height, &map);
 			break;
 		default:
 			running = false;
@@ -128,6 +139,7 @@ void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIME
 	al_install_audio();
 	al_init_acodec_addon();
 	// Cria uma janela com as dimensões especificadas
+	al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
 	ALLEGRO_DISPLAY_MODE mode;
 	if (al_get_display_mode(0, &mode)) {
 		*width = mode.width;
@@ -156,7 +168,7 @@ int menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
-	while (running) {
+	while (*running) {
 		al_wait_for_event(*queue, ev);
 		// Tratamento dos eventos recebidos
 		switch (ev->type) {
@@ -214,7 +226,7 @@ int menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
 void menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select) {
-	al_clear_to_color(al_map_rgb(30, 70, 30));
+	al_clear_to_color(al_map_rgb(30, 40, 30));
 	ALLEGRO_COLOR b_color = al_map_rgb(0,180,255),
 		      b_color_hover = al_map_rgb(0,120,255);
 
@@ -236,12 +248,12 @@ void menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int 
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, int ***map, int *map_w, int *map_h) {
+int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map) {
 	int thumbs_n = 3;
 	image* thumbs = malloc(thumbs_n * sizeof(image));
-	thumbs[0].img = al_load_bitmap("../../imagens/thumbs/original.png");
-	thumbs[1].img = al_load_bitmap("../../imagens/thumbs/original.png");
-	thumbs[2].img = al_load_bitmap("../../imagens/thumbs/original.png");
+	thumbs[0].img = al_load_bitmap("../../imagens/thumbs/original.jpg");
+	thumbs[1].img = al_load_bitmap("../../imagens/thumbs/original.jpg");
+	thumbs[2].img = al_load_bitmap("../../imagens/thumbs/original.jpg");
 	for (int i = 0; i < thumbs_n; i++) {
 		thumbs[i].w = al_get_bitmap_width(thumbs[i].img);
 		thumbs[i].h = al_get_bitmap_width(thumbs[i].img);
@@ -254,7 +266,7 @@ int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *runni
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
-	while (running) {
+	while (*running) {
 		al_wait_for_event(*queue, ev);
 		// Tratamento dos eventos recebidos
 		switch (ev->type) {
@@ -276,9 +288,9 @@ int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *runni
 			// Ao clicar sobre o botão, vai seleciona o mapa correspondente e volta para o menu principal
 			for (int i = 0; i < thumbs_n; i++)
 				if (b[i].hover) {
-					if (*map != NULL)
-						free_map(map, *map_w);
-					*map = get_map(i, map_w, map_h);
+					if (map->m != NULL)
+						free_map(map);
+					get_map(i, map);
 					return 0;
 				}
 			break;
@@ -303,9 +315,10 @@ int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *runni
 			}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ENTER || ev->keyboard.keycode == ALLEGRO_KEY_PAD_ENTER)
 				if (select >= 0 && select < thumbs_n) {
-					if (*map != NULL)
-						free_map(map, *map_w);
-					*map = get_map(select, map_w, map_h);
+					if (map->m != NULL)
+						free_map(map);
+					get_map(select, map);
+					return 0;
 				}
 			break;
 		case ALLEGRO_EVENT_TIMER:
@@ -323,7 +336,7 @@ int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *runni
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
 void choose_map_menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select, image *thumbs, int *thumbs_n) {
-	al_clear_to_color(al_map_rgb(30, 70, 30));
+	al_clear_to_color(al_map_rgb(30, 40, 30));
 	ALLEGRO_COLOR thumbs_color = al_map_rgba_f(1, 1, 1, 0.75),
 		      thumbs_color_hover = al_map_rgba_f(1, 1, 1, 1);
 
@@ -343,29 +356,182 @@ void choose_map_menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n,
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-int** get_map (int map_id, int *map_w, int *map_h) {
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map* map, ALLEGRO_FONT *font, int width, int height) {
+	map->x_fac = 1.0*(map->x_f - map->x_i)/map->w;
+	map->y_fac = 1.0*(map->y_f - map->y_i)/map->h;
+//	printf("x:%lf\ny:%lf\n", map->x_fac, map->y_fac);
+//	printf("x_i:%d\nx_f:%d\n", map->x_i, map->x_f);
+	/*
+	for (int i = 0; i < map->h; ++i) {
+		for (int j = 0; j < map->w; ++j)
+			printf("%d", map->m[i][j]);
+		printf("\n");
+	}
+	*/
+	int b_n = 0;
+	button* b = NULL;
+/*
+	b = malloc(b_n * sizeof(button));
+	b[0] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.35-0.05), height*(0.35+0.05), false};
+	b[1] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.46-0.05), height*(0.46+0.05), false};
+	b[2] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.57-0.05), height*(0.57+0.05), false};
+*/
+	int mouse_x, mouse_y;
+	bool redraw = false;
+	int select = -1;
+	while (*running) {
+		al_wait_for_event(*queue, ev);
+		// Tratamento dos eventos recebidos
+		switch (ev->type) {
+		case ALLEGRO_EVENT_DISPLAY_CLOSE:
+			*running = false;
+			break;
+		case ALLEGRO_EVENT_MOUSE_AXES:
+		case ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY:
+			// Atualiza posição do mouse e detecta se está sobre o botão
+			mouse_x = ev->mouse.x;
+			mouse_y = ev->mouse.y;
+			for (int i = 0; i < b_n; i++) {
+				b[i].hover = (mouse_x >= b[i].x_i && mouse_x <= b[i].x_f && mouse_y >= b[i].y_i && mouse_y <= b[i].y_f);
+				if (b[i].hover)
+					select = i;
+			}
+			break;
+		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+			// Ao clicar sobre o botão, vai para o menu correspondente
+			for (int i = 0; i < b_n; i++)
+				if (b[i].hover)
+					return i+1;
+			break;
+		case ALLEGRO_EVENT_KEY_DOWN:
+			if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT || ev->keyboard.keycode == ALLEGRO_KEY_UP) {
+				if (select < 0)
+					select = 0;
+				else if (--select < 0)
+					select += b_n;
+			}
+			if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT || ev->keyboard.keycode == ALLEGRO_KEY_DOWN) {
+				if (select < 0)
+					select = 0;
+				else if (++select == b_n)
+					select -= b_n;
+			}
+			if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+				if (select >= 0)
+					select = -1;
+				else
+					*running = false;
+			}
+			if (ev->keyboard.keycode == ALLEGRO_KEY_ENTER || ev->keyboard.keycode == ALLEGRO_KEY_PAD_ENTER)
+				if (select >= 0)
+					return select+1;
+			break;
+		case ALLEGRO_EVENT_TIMER:
+			redraw = true; // Marca que a tela precisa ser redesenhada
+			break;
+		}
+		if (redraw && al_is_event_queue_empty(*queue)) {
+			game_show(map, &font, b, &b_n, &select);
+			redraw = false;
+		}
+	}
+	return 0;
+}
+
+/*-------------------------------------------------------------------------------------------------------------------------*/
+
+void game_show (Map* map, ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select) {
+	al_clear_to_color(al_map_rgb(30, 40, 30));
+	ALLEGRO_COLOR wall = al_map_rgb(0, 10, 100),
+		      empty = al_map_rgb(0, 0, 0),
+		      pellet = al_map_rgb(250, 255, 255),
+		      vitamin = al_map_rgb(250, 150, 150);
+
+	al_draw_filled_rectangle(map->x_i-10, map->y_i-10, map->x_f+10, map->y_f+10, al_map_rgb(0, 0, 0));
+
+	for (int i = 0; i < map->h; ++i) {
+		for (int j = 0; j < map->w; ++j) {
+			switch (map->m[i][j]) {
+			default:
+				al_draw_filled_rectangle(map->x_i+map->x_fac*j, map->y_i+map->y_fac*i, map->x_i+map->x_fac*(j+1), map->y_i+map->y_fac*(i+1), wall);
+				break;
+			case 1:
+				al_draw_filled_rectangle(map->x_i+map->x_fac*j, map->y_i+map->y_fac*i, map->x_i+map->x_fac*(j+1), map->y_i+map->y_fac*(i+1), empty);
+				al_draw_filled_circle(map->x_i+map->x_fac*(j+0.5), map->y_i+map->y_fac*(i+0.5), map->y_fac*0.125, pellet);
+				break;
+			case 2:
+				al_draw_filled_rectangle(map->x_i+map->x_fac*j, map->y_i+map->y_fac*i, map->x_i+map->x_fac*(j+1), map->y_i+map->y_fac*(i+1), empty);
+				break;
+			case 3:
+				al_draw_filled_rectangle(map->x_i+map->x_fac*j, map->y_i+map->y_fac*i, map->x_i+map->x_fac*(j+1), map->y_i+map->y_fac*(i+1), empty);
+				al_draw_filled_circle(map->x_i+map->x_fac*(j+0.5), map->y_i+map->y_fac*(i+0.5), map->y_fac*0.375, vitamin);
+				break;
+			}
+		}
+	}
+
+/*
+	ALLEGRO_COLOR b_color = al_map_rgb(0,180,255),
+		      b_color_hover = al_map_rgb(0,120,255);
+
+	for (int i = 0; i < *b_n; i++)
+		if (b[i].hover || *select == i)
+			al_draw_filled_rounded_rectangle(b[i].x_i, b[i].y_i, b[i].x_f, b[i].y_f, 10, 10, b_color_hover);
+		else
+			al_draw_filled_rounded_rectangle(b[i].x_i, b[i].y_i, b[i].x_f, b[i].y_f, 10, 10, b_color);
+	al_draw_text(*font, al_map_rgb(255,255,55), (b[0].x_i+b[0].x_f)/2, (b[0].y_i+b[0].y_f)/2, ALLEGRO_ALIGN_CENTER, "Start");
+	al_draw_text(*font, al_map_rgb(255,255,55), (b[1].x_i+b[1].x_f)/2, (b[1].y_i+b[1].y_f)/2, ALLEGRO_ALIGN_CENTER, "Maps");
+	al_draw_text(*font, al_map_rgb(255,255,55), (b[2].x_i+b[2].x_f)/2, (b[2].y_i+b[2].y_f)/2, ALLEGRO_ALIGN_CENTER, "Quit");
+
+	int sprite_x = frame * SPRITE_SIZE;
+	int sprite_y = movement * SPRITE_SIZE;
+	al_draw_bitmap_region(sprite_sheet, sprite_x, sprite_y, SPRITE_SIZE, SPRITE_SIZE, (WIDTH - SPRITE_SIZE)/2, HEIGHT - SPRITE_SIZE - 80, 0);
+*/
+	al_flip_display();
+}
+
+/*-------------------------------------------------------------------------------------------------------------------------*/
+
+void get_map (int map_id, Map *map) {
 	FILE* map_file;
 	switch (map_id) {
 	default:
 		map_file = fopen("../../mapas/original.txt", "r");
 		break;
 	}
-	fscanf(map_file, "%d %d", map_w, map_h);
-	int **map = malloc(*map_h * sizeof(int*));
-	for (int i = 0; i < *map_w; i++)
-		map[i] = malloc(*map_w * sizeof(int));
-	for (int i = 0; i < *map_h; i++)
-		for (int j = 0; j < *map_w; j++)
-			fscanf(map_file, "%d", &map[i][j]);
+	fscanf(map_file, "%d %d", &map->w, &map->h);
+	map->m = malloc(map->h * sizeof(int*));
+	for (int i = 0; i < map->h; i++)
+		map->m[i] = malloc(map->w * sizeof(int));
+	char *line = malloc((map->w+1) * sizeof(char));
+	for (int i = 0; i < map->h; i++) {
+		fscanf(map_file, "%s ", line);
+		for (int j = 0; j < map->w; j++) {
+			switch (line[j]) {
+			default:// Parede
+				map->m[i][j] = 0;
+				break;
+			case '1':// Bolinha
+				map->m[i][j] = 1;
+				break;
+			case '2':// Vazio
+				map->m[i][j] = 2;
+				break;
+			case '3':// Vitamina
+				map->m[i][j] = 3;
+				break;
+
+			}
+		}
+	}
 	fclose(map_file);
-	return map;
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void free_map (int ***map, int map_w) {
-	for (int i = 0; i < map_w; i++)
-		free((*map)[i]);
-	free(*map);
-	*map = NULL;
+void free_map (Map *map) {
+	for (int i = 0; i < map->w; i++)
+		free(map->m[i]);
+	free(map->m);
+	map->m = NULL;
 }
