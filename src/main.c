@@ -14,14 +14,14 @@
 #define SPRITE_ROWS 8                      // Número de linhas na spritesheet (diferentes movimentos)
 #define FPS 60
 
-typedef struct button button;
-struct button {
+typedef struct Button Button;
+struct Button {
 	int x_i, x_f, y_i, y_f;
 	bool hover;
 };
 
-typedef struct image image;
-struct image {
+typedef struct Image Image;
+struct Image {
 	ALLEGRO_BITMAP *img;
 	int w, h;
 };
@@ -34,13 +34,21 @@ struct Map {
 	double x_fac, y_fac;
 };
 
+typedef struct Entity Entity;
+struct Entity {
+	double pos_x, pos_y;
+	double v;
+	char direction;
+//	ALLEGRO_BITMAP *sprite;
+};
+
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
 int menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height);
-void menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select);
+void menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select);
 int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map);
-void choose_map_menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select, image *thumbs, int *thumbs_n);
+void choose_map_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Image *thumbs, int *thumbs_n);
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map* map, ALLEGRO_FONT *font, int width, int height);
-void game_show (Map* map, ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select);
+void game_show (Map* map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select);
 void get_map (int map_id, Map *map);
 void free_map (Map *map);
 
@@ -78,6 +86,13 @@ int main() {
 	int menu_id = 0;
 //	printf("%dx%d\n", width, height);
 	Map map = (Map){NULL, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0};
+	int entities_n = 5;
+	Entity *entities= malloc(entities_n * sizeof(Entity));
+	entities[0] = (Entity){0.0, 0.0, 5.0, 'd'};// Pac-man
+	entities[1] = (Entity){0.0, 0.0, 5.0, 'd'};// Fantasmas
+	entities[2] = (Entity){0.0, 0.0, 5.0, 'd'};
+	entities[3] = (Entity){0.0, 0.0, 5.0, 'd'};
+	entities[4] = (Entity){0.0, 0.0, 5.0, 'd'};
 	bool running = true;      // Indica se a aplicação deve continuar executando
 //	bool redraw = true;       // Indica se a tela precisa ser redesenhada
 //	bool hover = false;       // Indica se o mouse está sobre o botão
@@ -160,11 +175,11 @@ void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIME
 
 int menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height) {
 	int b_n = 3;
-	button* b;
-	b = malloc(b_n * sizeof(button));
-	b[0] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.35-0.05), height*(0.35+0.05), false};
-	b[1] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.46-0.05), height*(0.46+0.05), false};
-	b[2] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.57-0.05), height*(0.57+0.05), false};
+	Button* b;
+	b = malloc(b_n * sizeof(Button));
+	b[0] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.35-0.05), height*(0.35+0.05), false};
+	b[1] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.46-0.05), height*(0.46+0.05), false};
+	b[2] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.57-0.05), height*(0.57+0.05), false};
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
@@ -225,7 +240,7 @@ int menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select) {
+void menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 	ALLEGRO_COLOR b_color = al_map_rgb(0,180,255),
 		      b_color_hover = al_map_rgb(0,120,255);
@@ -250,7 +265,7 @@ void menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int 
 
 int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map) {
 	int thumbs_n = 3;
-	image* thumbs = malloc(thumbs_n * sizeof(image));
+	Image* thumbs = malloc(thumbs_n * sizeof(Image));
 	thumbs[0].img = al_load_bitmap("../../imagens/thumbs/original.jpg");
 	thumbs[1].img = al_load_bitmap("../../imagens/thumbs/original.jpg");
 	thumbs[2].img = al_load_bitmap("../../imagens/thumbs/original.jpg");
@@ -259,10 +274,10 @@ int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *runni
 		thumbs[i].h = al_get_bitmap_width(thumbs[i].img);
 	}
 	int b_n = 3;
-	button* b = malloc(b_n * sizeof(button));
-	b[0] = (button){width*(0.23-0.13), width*(0.23+0.13), height*(0.5-0.1), height*(0.5+0.1), false};
-	b[1] = (button){width*(0.5-0.13), width*(0.5+0.13), height*(0.5-0.1), height*(0.5+0.1), false};
-	b[2] = (button){width*(0.77-0.13), width*(0.77+0.13), height*(0.5-0.1), height*(0.5+0.1), false};
+	Button* b = malloc(b_n * sizeof(Button));
+	b[0] = (Button){width*(0.23-0.13), width*(0.23+0.13), height*(0.5-0.1), height*(0.5+0.1), false};
+	b[1] = (Button){width*(0.5-0.13), width*(0.5+0.13), height*(0.5-0.1), height*(0.5+0.1), false};
+	b[2] = (Button){width*(0.77-0.13), width*(0.77+0.13), height*(0.5-0.1), height*(0.5+0.1), false};
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
@@ -335,7 +350,7 @@ int choose_map_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *runni
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void choose_map_menu_show (ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select, image *thumbs, int *thumbs_n) {
+void choose_map_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Image *thumbs, int *thumbs_n) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 	ALLEGRO_COLOR thumbs_color = al_map_rgba_f(1, 1, 1, 0.75),
 		      thumbs_color_hover = al_map_rgba_f(1, 1, 1, 1);
@@ -369,12 +384,12 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map* ma
 	}
 	*/
 	int b_n = 0;
-	button* b = NULL;
+	Button* b = NULL;
 /*
-	b = malloc(b_n * sizeof(button));
-	b[0] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.35-0.05), height*(0.35+0.05), false};
-	b[1] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.46-0.05), height*(0.46+0.05), false};
-	b[2] = (button){width*(0.5-0.2), width*(0.5+0.2), height*(0.57-0.05), height*(0.57+0.05), false};
+	b = malloc(b_n * sizeof(Button));
+	b[0] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.35-0.05), height*(0.35+0.05), false};
+	b[1] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.46-0.05), height*(0.46+0.05), false};
+	b[2] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.57-0.05), height*(0.57+0.05), false};
 */
 	int mouse_x, mouse_y;
 	bool redraw = false;
@@ -440,7 +455,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map* ma
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void game_show (Map* map, ALLEGRO_FONT **font, const button *b, const int *b_n, const int *select) {
+void game_show (Map* map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 	ALLEGRO_COLOR wall = al_map_rgb(0, 10, 100),
 		      empty = al_map_rgb(0, 0, 0),
