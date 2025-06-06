@@ -1,1 +1,0 @@
-gcc src/main.c -o ./bin/Release/pacman -Wall -g $(pkg-config --cflags --libs allegro-5 allegro_main-5 allegro_font-5 allegro_ttf-5 allegro_image-5 allegro_audio-5 allegro_acodec-5 allegro_primitives-5) && cd bin/Release && ./pacman && cd ../..
