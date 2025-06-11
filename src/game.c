@@ -3,7 +3,7 @@
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id) {
 	Pacman pacman;
 	int ghosts_n;
-	Ghost *ghosts = get_entities(map, &pacman, &ghosts_n); // Segmentation fault here
+	Ghost *ghosts = get_entities(map, &pacman, &ghosts_n);
 	if (!ghosts) {
 		printf("Failed to load sprites\n");
 		*running = false;
@@ -203,10 +203,10 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 		pacman->sprite = al_load_bitmap("../../sprites/Pac Man.png");
 		pacman->dyn.x = map->w/2.0;
 		pacman->dyn.y = 24.5;
-		*ghosts_n = 4;
+		*ghosts_n = 4; // Número de fantasmas
 		ghosts = malloc(*ghosts_n * sizeof(Ghost));
 		ghosts[0] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
-		ghosts[1] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
+		ghosts[1] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL}; // Apenas um fantasma (DEBUG)
 		ghosts[2] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
 		ghosts[3] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
 		ghosts[0].sprite = al_load_bitmap("../../sprites/Ghost Blue.png");
@@ -311,7 +311,7 @@ void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.x = 0.5;
 			if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*0.5)]){ // Se parede, não anda
 				ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + ghosts[i].size;
-				change_direction(ghosts, ghosts_n); // Muda de direção ao bater
+				change_direction(&ghosts[i]); // Muda de direção ao bater
 			}
 				
 		} else if (ghosts[i].dyn.direction_y) {
@@ -324,38 +324,52 @@ void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.y = 0.5;
 			if (!map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*0.5)][(int)(ghosts[i].dyn.x)]){ // Se parede, não anda
 				ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + ghosts[i].size;
-				change_direction(ghosts, ghosts_n); // Muda de direção ao bater
+				change_direction(&ghosts[i]); // Muda de direção ao bater
 			}
-				
 		}
+
+		// if (ghosts[i].dyn.direction_x) {
+		// 	// Movimento
+		// 	ghosts[i].dyn.x += (int) ghosts[i].dyn.direction_x * ghosts[i].dyn.v / FPS; // Move
+		// 	printf(" %f ", ghosts[i].dyn.x);
+		// 	if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)]){ // Se parede, não anda (parede é 0.)
+		// 		ghosts[i].dyn.x -= (int) ghosts[i].dyn.direction_x * ghosts[i].dyn.v / FPS;
+		// 		change_direction(ghosts, ghosts_n); // Muda de direção ao bater
+		// 	}
+				
+		// } else if (ghosts[i].dyn.direction_y) {
+		// 	ghosts[i].dyn.y += (int) ghosts[i].dyn.direction_y * ghosts[i].dyn.v / FPS; // Move
+		// 	if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)]){ // Se parede, não anda (parede é 0.)
+		// 		ghosts[i].dyn.y -= (int) ghosts[i].dyn.direction_y * ghosts[i].dyn.v / FPS;
+		// 		change_direction(ghosts, ghosts_n); // Muda de direção ao bater
+		// 	}
+		// }
 	}
 }
 
-void change_direction(Ghost *ghosts, int *ghosts_n){
-	for (int i = 0; i < *ghosts_n; i++){
-		int random = rand() % 100; // Gera número entre 0 e 100
+void change_direction(Ghost *ghost){
+	int random = rand() % 100; // Gera número entre 0 e 100
 
-		if(ghosts[i].dyn.direction_x){
-			ghosts[i].dyn.direction_x = 0; // Reseta movimento
+	if(ghost->dyn.direction_x){
+		ghost->dyn.direction_x = 0; // Reseta movimento
 
-			if(random < 50){
-				ghosts[i].dyn.direction_y = 1;
-				ghosts[i].movement = 1; // 3 é cima
-			} else {
-				ghosts[i].dyn.direction_y = -1;
-				ghosts[i].movement = 3; // 1 é baixo
-			}
+		if(random < 50){
+			ghost->dyn.direction_y = 1;
+			ghost->movement = 1; // 3 é cima
+		} else {
+			ghost->dyn.direction_y = -1;
+			ghost->movement = 3; // 1 é baixo
 		}
-		else if(ghosts[i].dyn.direction_y){
-			ghosts[i].dyn.direction_y = 0; // Reseta movimento
+	}
+	else if(ghost->dyn.direction_y){
+		ghost->dyn.direction_y = 0; // Reseta movimento
 
-			if(random < 50){
-				ghosts[i].dyn.direction_x = 1;
-				ghosts[i].movement = 0; // 0 é direita
-			} else {
-				ghosts[i].dyn.direction_x = -1;
-				ghosts[i].movement = 2; // 2 é esquerda
-			}
+		if(random < 50){
+			ghost->dyn.direction_x = 1;
+			ghost->movement = 0; // 0 é direita
+		} else {
+			ghost->dyn.direction_x = -1;
+			ghost->movement = 2; // 2 é esquerda
 		}
 	}
 }

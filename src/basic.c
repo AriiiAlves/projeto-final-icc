@@ -44,7 +44,7 @@ void destroy_all (ALLEGRO_SAMPLE_INSTANCE **sample_instance, ALLEGRO_SAMPLE **sa
 
 bool load_media (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, ALLEGRO_SAMPLE **menu_sample, ALLEGRO_SAMPLE **game_sample, ALLEGRO_BITMAP **background) {
 	*font = al_load_ttf_font("../../fontes/PressStart.ttf", 19, 0);
-	*title_font = al_load_ttf_font("../../fontes/PressStart.ttf", 35, 0);
+	*title_font = al_load_ttf_font("../../fontes/PressStart.ttf", 60, 0);
 	if (!(*font)) {
 		printf("Erro ao carregar fonte.\n");
 		return false;
