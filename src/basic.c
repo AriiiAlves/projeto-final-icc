@@ -42,15 +42,23 @@ void destroy_all (ALLEGRO_SAMPLE_INSTANCE **sample_instance, ALLEGRO_SAMPLE **sa
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-bool load_media (ALLEGRO_FONT **font, ALLEGRO_SAMPLE **sample) {
-	*font = al_load_ttf_font("../../fontes/arial.ttf", 19, 0);
+bool load_media (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, ALLEGRO_SAMPLE **menu_sample, ALLEGRO_SAMPLE **game_sample) {
+	*font = al_load_ttf_font("../../fontes/PressStart.ttf", 19, 0);
+	*title_font = al_load_ttf_font("../../fontes/PressStart.ttf", 35, 0);
 	if (!(*font)) {
 		printf("Erro ao carregar fonte.\n");
 		return false;
 	}
 	al_reserve_samples(1);
-	*sample = al_load_sample("../../sons/sound.wav");
-	if (!(*sample)) {
+	*menu_sample = al_load_sample("../../sons/menu.wav");
+	if (!(*menu_sample)) {
+		printf("Erro ao carregar som.\n");
+		return false;
+	}
+
+	al_reserve_samples(1);
+	*game_sample = al_load_sample("../../sons/menu.wav");
+	if (!(*game_sample)) {
 		printf("Erro ao carregar som.\n");
 		return false;
 	}

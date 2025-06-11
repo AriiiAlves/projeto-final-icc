@@ -5,8 +5,11 @@ int main() {
 	ALLEGRO_EVENT_QUEUE *queue;
 	ALLEGRO_TIMER *timer;
 	ALLEGRO_FONT *font;
-	ALLEGRO_SAMPLE *sample;
-	ALLEGRO_SAMPLE_INSTANCE *sample_instance;
+	ALLEGRO_FONT *title_font;
+	ALLEGRO_SAMPLE *menu_sample;
+	ALLEGRO_SAMPLE *game_sample;
+	ALLEGRO_SAMPLE_INSTANCE *menu_sample_instance;
+	ALLEGRO_SAMPLE_INSTANCE *game_sample_instance;
 	int width = 1920, height = 1080; // Valores padrão caso o Allegro falhe em obter os do sistema
 	double sprite_timer = 0.0; // Timer do sprite
 	double sprite_delay = 0.05; // Delay entre um sprite e outro
@@ -18,14 +21,18 @@ int main() {
 	Map map = (Map){NULL, 0, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0, 0.125, 0.375};
 	bool running = true;      // Indica se a aplicação deve continuar executando
 
-	if (!load_media(&font, &sample))
+	if (!load_media(&font, &title_font, &menu_sample, &game_sample))
 		return -1;
 
 	// Play music
-	sample_instance = al_create_sample_instance(sample);
-	al_attach_sample_instance_to_mixer(sample_instance, al_get_default_mixer());
-	al_set_sample_instance_playmode(sample_instance, ALLEGRO_PLAYMODE_LOOP);
-	al_play_sample_instance(sample_instance);
+	menu_sample_instance = al_create_sample_instance(menu_sample);
+	al_attach_sample_instance_to_mixer(menu_sample_instance, al_get_default_mixer());
+	al_set_sample_instance_playmode(menu_sample_instance, ALLEGRO_PLAYMODE_LOOP);
+	al_play_sample_instance(menu_sample_instance);
+
+	game_sample_instance = al_create_sample_instance(game_sample);
+	al_attach_sample_instance_to_mixer(game_sample_instance, al_get_default_mixer());
+	al_set_sample_instance_playmode(game_sample_instance, ALLEGRO_PLAYMODE_LOOP);
 
 
 	ALLEGRO_EVENT ev;         // Estrutura para eventos
@@ -33,12 +40,16 @@ int main() {
 	while (running) {
 		switch (menu_id) {
 		case 0:
-			menu_id = main_menu(&ev, &queue, &running, font, width, height);
+			al_stop_sample_instance(game_sample_instance);
+			al_play_sample_instance(menu_sample_instance);
+			menu_id = main_menu(&ev, &queue, &running, font, title_font, width, height);
 			break;
 		case 1:
+			al_stop_sample_instance(menu_sample_instance);
+			al_play_sample_instance(game_sample_instance);
 			if (map.m == NULL)
 				get_map(0, &map);
-			menu_id = game(&ev, &queue, &running, &map, font, width, height, &timer, &sprite_timer, &sprite_delay);
+			menu_id = game(&ev, &queue, &running, &map, font, width, height, &timer, &sprite_timer, &sprite_delay, &menu_id);
 			break;
 		case 2:
 			menu_id = maps_menu(&ev, &queue, &running, font, width, height, &map);
@@ -49,6 +60,6 @@ int main() {
 		}
 	}
 
-	destroy_all(&sample_instance, &sample, &font, &timer, &queue, &display);
+	destroy_all(&menu_sample_instance, &menu_sample, &font, &timer, &queue, &display);
 	return 0;
 }

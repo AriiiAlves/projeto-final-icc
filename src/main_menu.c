@@ -1,6 +1,6 @@
 #include"pacman.h"
 
-int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height) {
+int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height) {
 	int next_menu = -1;
 	int b_n = 3;
 	Button* b;
@@ -59,7 +59,7 @@ int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 			break;
 		}
 		if (redraw && al_is_event_queue_empty(*queue)) {
-			main_menu_show(&font, b, &b_n, &select);
+			main_menu_show(&font, &title_font, b, &b_n, &select);
 			redraw = false;
 		}
 	}
@@ -69,10 +69,10 @@ int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void main_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select) {
+void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Button *b, const int *b_n, const int *select) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
-	ALLEGRO_COLOR b_color = al_map_rgb(0,180,255),
-		      b_color_hover = al_map_rgb(0,120,255);
+	ALLEGRO_COLOR b_color = al_map_rgb(255, 255, 102),
+		      b_color_hover = al_map_rgb(204, 204, 0);
 
 	if (*select >= 0)
 		al_draw_filled_rounded_rectangle(b[*select].x_i, b[*select].y_i, b[*select].x_f, b[*select].y_f, 10, 10, b_color_hover);
@@ -81,8 +81,10 @@ void main_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const
 			al_draw_filled_rounded_rectangle(b[i].x_i, b[i].y_i, b[i].x_f, b[i].y_f, 10, 10, b_color_hover);
 		else if (*select != i)
 			al_draw_filled_rounded_rectangle(b[i].x_i, b[i].y_i, b[i].x_f, b[i].y_f, 10, 10, b_color);
-	al_draw_text(*font, al_map_rgb(255,255,55), (b[0].x_i+b[0].x_f)/2, (b[0].y_i+b[0].y_f)/2, ALLEGRO_ALIGN_CENTER, "Start");
-	al_draw_text(*font, al_map_rgb(255,255,55), (b[1].x_i+b[1].x_f)/2, (b[1].y_i+b[1].y_f)/2, ALLEGRO_ALIGN_CENTER, "Maps");
-	al_draw_text(*font, al_map_rgb(255,255,55), (b[2].x_i+b[2].x_f)/2, (b[2].y_i+b[2].y_f)/2, ALLEGRO_ALIGN_CENTER, "Quit");
+	al_draw_text(*title_font, al_map_rgb(255, 255, 102), (b[0].x_i+b[0].x_f)/2, (b[0].y_i+b[0].y_f)/2*0.5, ALLEGRO_ALIGN_CENTER, "Pac Man");
+
+	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[0].x_i+b[0].x_f)/2, (b[0].y_i+b[0].y_f)/2, ALLEGRO_ALIGN_CENTER, "Start");
+	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[1].x_i+b[1].x_f)/2, (b[1].y_i+b[1].y_f)/2, ALLEGRO_ALIGN_CENTER, "Maps");
+	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[2].x_i+b[2].x_f)/2, (b[2].y_i+b[2].y_f)/2, ALLEGRO_ALIGN_CENTER, "Quit");
 	al_flip_display();
 }

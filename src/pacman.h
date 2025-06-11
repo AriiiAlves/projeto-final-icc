@@ -70,11 +70,11 @@ struct Ghost {
 
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
 
-bool load_media (ALLEGRO_FONT **font, ALLEGRO_SAMPLE **sample);
+bool load_media (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, ALLEGRO_SAMPLE **menu_sample, ALLEGRO_SAMPLE **game_sample);
 
-int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height);
+int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height);
 
-void main_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select);
+void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Button *b, const int *b_n, const int *select);
 
 int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map);
 
@@ -82,7 +82,7 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay);
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n);
 

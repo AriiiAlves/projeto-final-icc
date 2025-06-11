@@ -1,6 +1,6 @@
 #include"pacman.h"
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay) {
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id) {
 	Pacman pacman;
 	int ghosts_n;
 	Ghost *ghosts = get_entities(map, &pacman, &ghosts_n); // Segmentation fault here
@@ -22,7 +22,9 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
-	while (*running) {
+	int game_running = 1;
+
+	while (game_running) {
 		al_wait_for_event(*queue, ev);
 		// Tratamento dos eventos recebidos
 		switch (ev->type) {
@@ -88,7 +90,9 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			if (ev->keyboard.keycode == ALLEGRO_KEY_MINUS)
 				pacman.dyn.v -= 0.1;
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-				*running = false;
+				//*running = false;
+				*menu_id = 0;
+				game_running = 0;
 			}
 			break;
 		case ALLEGRO_EVENT_TIMER:
