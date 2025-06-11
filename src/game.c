@@ -206,10 +206,10 @@ void move_pacman (Map *map, Pacman *pacman) {
 		// Movimento
 		pacman->dyn.x += pacman->dyn.direction_x * pacman->dyn.v / FPS; // Move
 		pacman->dyn.y = (int)(pacman->dyn.y) + 0.5; // Centraliza
-		if (pacman->dyn.x < pacman->size) // Faz o túnel, une as paredes esquerda e direita
-			pacman->dyn.x = map->w - pacman->size;
-		else if (pacman->dyn.x + pacman->size > map->w)
-			pacman->dyn.x = pacman->size;
+		if (pacman->dyn.x < 0.5) // Faz o túnel, une as paredes esquerda e direita
+			pacman->dyn.x = map->w - 0.5;
+		else if (pacman->dyn.x + 0.5 > map->w)
+			pacman->dyn.x = 0.5;
 		next_square = map->m[(int)(pacman->dyn.y)][(int)(pacman->dyn.x+pacman->dyn.direction_x*0.5)];
 		if (!next_square) // Se parede, não anda
 			pacman->dyn.x = (int)(pacman->dyn.x) + 0.5;
@@ -227,10 +227,10 @@ void move_pacman (Map *map, Pacman *pacman) {
 		// Movimento
 		pacman->dyn.x = (int)(pacman->dyn.x) + 0.5; // Centraliza
 		pacman->dyn.y += pacman->dyn.direction_y * pacman->dyn.v / FPS; // Move
-		if (pacman->dyn.y < pacman->size) // Faz o túnel, une as paredes esquerda e direita
-			pacman->dyn.y = map->h - pacman->size;
-		else if (pacman->dyn.y + pacman->size > map->h)
-			pacman->dyn.y = pacman->size;
+		if (pacman->dyn.y < 0.5) // Faz o túnel, une as paredes esquerda e direita
+			pacman->dyn.y = map->h - 0.5;
+		else if (pacman->dyn.y + 0.5 > map->h)
+			pacman->dyn.y = 0.5;
 		next_square = map->m[(int)(pacman->dyn.y+pacman->dyn.direction_y*0.5)][(int)(pacman->dyn.x)];
 		if (!next_square) // Se parede, não anda
 			pacman->dyn.y = (int)(pacman->dyn.y) + 0.5;
@@ -256,20 +256,20 @@ void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 			// Movimento
 			ghosts[i].dyn.x += ghosts[i].dyn.direction_x * ghosts[i].dyn.v / FPS; // Move
 			ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + 0.5; // Centraliza
-			if (ghosts[i].dyn.x < ghosts[i].size) // Faz o túnel, une as paredes esquerda e direita
+			if (ghosts[i].dyn.x < 0.5) // Faz o túnel, une as paredes esquerda e direita
 				ghosts[i].dyn.x = map->w - 0.5;
-			else if (ghosts[i].dyn.x + ghosts[i].size > map->w)
-				ghosts[i].dyn.x = ghosts[i].size;
+			else if (ghosts[i].dyn.x + 0.5 > map->w)
+				ghosts[i].dyn.x = 0.5;
 			if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*0.5)]) // Se parede, não anda
 				ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + ghosts[i].size;
 		} else if (ghosts[i].dyn.direction_y) {
 			// Movimento
 			ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + 0.5; // Centraliza
 			ghosts[i].dyn.y += ghosts[i].dyn.direction_y * ghosts[i].dyn.v / FPS; // Move
-			if (ghosts[i].dyn.y < ghosts[i].size) // Faz o túnel, une as paredes esquerda e direita
+			if (ghosts[i].dyn.y < 0.5) // Faz o túnel, une as paredes esquerda e direita
 				ghosts[i].dyn.y = map->h - 0.5;
-			else if (ghosts[i].dyn.y + ghosts[i].size > map->h)
-				ghosts[i].dyn.y = ghosts[i].size;
+			else if (ghosts[i].dyn.y + 0.5 > map->h)
+				ghosts[i].dyn.y = 0.5;
 			if (!map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*0.5)][(int)(ghosts[i].dyn.x)]) // Se parede, não anda
 				ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + ghosts[i].size;
 		}
