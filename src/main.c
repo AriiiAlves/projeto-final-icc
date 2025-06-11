@@ -10,6 +10,7 @@ int main() {
 	ALLEGRO_SAMPLE *game_sample;
 	ALLEGRO_SAMPLE_INSTANCE *menu_sample_instance;
 	ALLEGRO_SAMPLE_INSTANCE *game_sample_instance;
+	ALLEGRO_BITMAP *background;
 	int width = 1920, height = 1080; // Valores padrão caso o Allegro falhe em obter os do sistema
 	double sprite_timer = 0.0; // Timer do sprite
 	double sprite_delay = 0.05; // Delay entre um sprite e outro
@@ -21,7 +22,7 @@ int main() {
 	Map map = (Map){NULL, 0, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0, 0.125, 0.375};
 	bool running = true;      // Indica se a aplicação deve continuar executando
 
-	if (!load_media(&font, &title_font, &menu_sample, &game_sample))
+	if (!load_media(&font, &title_font, &menu_sample, &game_sample, &background))
 		return -1;
 
 	// Play music
@@ -34,7 +35,6 @@ int main() {
 	al_attach_sample_instance_to_mixer(game_sample_instance, al_get_default_mixer());
 	al_set_sample_instance_playmode(game_sample_instance, ALLEGRO_PLAYMODE_LOOP);
 
-
 	ALLEGRO_EVENT ev;         // Estrutura para eventos
 	al_start_timer(timer);    // Inicia o temporizador
 	while (running) {
@@ -42,7 +42,7 @@ int main() {
 		case 0:
 			al_stop_sample_instance(game_sample_instance);
 			al_play_sample_instance(menu_sample_instance);
-			menu_id = main_menu(&ev, &queue, &running, font, title_font, width, height);
+			menu_id = main_menu(&ev, &queue, &running, font, title_font, width, height, background);
 			break;
 		case 1:
 			al_stop_sample_instance(menu_sample_instance);
