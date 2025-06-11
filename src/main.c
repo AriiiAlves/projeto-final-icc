@@ -8,6 +8,9 @@ int main() {
 	ALLEGRO_SAMPLE *sample;
 	ALLEGRO_SAMPLE_INSTANCE *sample_instance;
 	int width = 1920, height = 1080; // Valores padrão caso o Allegro falhe em obter os do sistema
+	double sprite_timer = 0.0; // Timer do sprite
+	double sprite_delay = 0.05; // Delay entre um sprite e outro
+	srand(time(NULL)); // Inicializa o randomizado usando o timestamp atual como semente
 
 	start(&display, &queue, &timer, &width, &height);
 
@@ -35,7 +38,7 @@ int main() {
 		case 1:
 			if (map.m == NULL)
 				get_map(0, &map);
-			menu_id = game(&ev, &queue, &running, &map, font, width, height);
+			menu_id = game(&ev, &queue, &running, &map, font, width, height, &timer, &sprite_timer, &sprite_delay);
 			break;
 		case 2:
 			menu_id = maps_menu(&ev, &queue, &running, font, width, height, &map);

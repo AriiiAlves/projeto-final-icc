@@ -1,9 +1,9 @@
 #include"pacman.h"
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height) {
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay) {
 	Pacman pacman;
 	int ghosts_n;
-	Ghost *ghosts = get_entities(map, &pacman, &ghosts_n);
+	Ghost *ghosts = get_entities(map, &pacman, &ghosts_n); // Segmentation fault here
 	if (!ghosts) {
 		printf("Failed to load sprites\n");
 		*running = false;
@@ -51,26 +51,38 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 				if ((map->m[(int)(pacman.dyn.y-1)][(int)(pacman.dyn.x)] % 4)) {
 					pacman.dyn.direction_x = 0;
 					pacman.dyn.direction_y = -1;
+					pacman.movement = 2; // 2 é cima
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT || ev->keyboard.keycode == ALLEGRO_KEY_A)
 				if ((map->m[(int)(pacman.dyn.y)][(int)(pacman.dyn.x-1)] % 4)) {
 					pacman.dyn.direction_x = -1;
 					pacman.dyn.direction_y = 0;
+					pacman.movement = 1; // 1 é esquerda
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_DOWN || ev->keyboard.keycode == ALLEGRO_KEY_S)
 				if ((map->m[(int)(pacman.dyn.y+1)][(int)(pacman.dyn.x)] % 4)) {
 					pacman.dyn.direction_x = 0;
 					pacman.dyn.direction_y = 1;
+					pacman.movement = 3; // 3 é baixo
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT || ev->keyboard.keycode == ALLEGRO_KEY_D)
 				if ((map->m[(int)(pacman.dyn.y)][(int)(pacman.dyn.x+1)] % 4)) {
 					pacman.dyn.direction_x = 1;
 					pacman.dyn.direction_y = 0;
+					pacman.movement = 0; // 0 é direita
 				}
-			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_PLUS)
+			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_PLUS){
 				pacman.dyn.v += 1;
-			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_MINUS)
+				for(int i = 0; i < ghosts_n; i++){
+					ghosts[i].dyn.v += 1;
+				}
+			}
+			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_MINUS){
 				pacman.dyn.v -= 1;
+				for(int i = 0; i < ghosts_n; i++){
+					ghosts[i].dyn.v -= 1;
+				}
+			}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_EQUALS)
 				pacman.dyn.v += 0.1;
 			if (ev->keyboard.keycode == ALLEGRO_KEY_MINUS)
@@ -80,8 +92,18 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			}
 			break;
 		case ALLEGRO_EVENT_TIMER:
+			// Atualiza a animação quando o tempo entre frames é atingido
+			*sprite_timer += 1.0 / 60.0;
+			if (*sprite_timer >= *sprite_delay) {
+				pacman.frame = (pacman.frame + 1) % PACMAN_SPRITE_COLS; // Avança para o próximo frame (Pac man)
+				for (int i = 0; i < ghosts_n; i++){
+					ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
+				}
+			*sprite_timer = 0.0;
+			}
 			move_pacman(map, &pacman);
-			move_ghosts(map, ghosts, &ghosts_n);
+			move_ghosts(map, ghosts, &ghosts_n); // Move fantasmas
+
 			redraw = true; // Marca que a tela precisa ser redesenhada
 			break;
 		}
@@ -98,6 +120,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
+// Design (by Ariel)
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 	ALLEGRO_COLOR wall = al_map_rgb(0, 10, 100),
@@ -105,9 +128,10 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 		      empty = al_map_rgb(10, 10, 12),
 		      pellet = al_map_rgb(250, 255, 255),
 		      vitamin = al_map_rgb(250, 150, 150);
-
+	
 	al_draw_filled_rectangle(map->x_i-10, map->y_i-10, map->x_f+10, map->y_f+10, al_map_rgb(0, 0, 0));
 
+	// Desenhando itens do mapa
 	for (int i = 0; i < map->h; ++i) {
 		for (int j = 0; j < map->w; ++j) {
 			switch (map->m[i][j]) {
@@ -133,12 +157,11 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 		}
 	}
 
-	ALLEGRO_COLOR color_pacman = al_map_rgb(200, 200, 30),
-		      color_ghosts[4] = {al_map_rgb(220, 10, 10), al_map_rgb(20, 170, 230), al_map_rgb(240, 120, 20), al_map_rgb(250, 90, 200)};
-	al_draw_filled_rectangle(map->x_i+map->x_fac*(pacman->dyn.x-0.25), map->y_i+map->y_fac*(pacman->dyn.y-0.25), map->x_i+map->x_fac*(pacman->dyn.x+0.25), map->y_i+map->y_fac*(pacman->dyn.y+0.25), color_pacman);
+	// Desenhando Pac Man e fantasmas na tela
+	
+	al_draw_bitmap_region(pacman->sprite, pacman->frame * SPRITE_SIZE, pacman->movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(pacman->dyn.x-0.4), map->y_i+map->y_fac*(pacman->dyn.y-0.4), 0);
 	for (int i = 0; i < *ghosts_n; i++)
-		al_draw_filled_rectangle(map->x_i+map->x_fac*(ghosts[i].dyn.x-0.25), map->y_i+map->y_fac*(ghosts[i].dyn.y-0.25), map->x_i+map->x_fac*(ghosts[i].dyn.x+0.25), map->y_i+map->y_fac*(ghosts[i].dyn.y+0.25), color_ghosts[i]);
-
+		al_draw_bitmap_region(ghosts[i].sprite, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-0.4), map->y_i+map->y_fac*(ghosts[i].dyn.y-0.4), 0);
 /*
 	ALLEGRO_COLOR b_color = al_map_rgb(0,180,255),
 		      b_color_hover = al_map_rgb(0,120,255);
@@ -173,7 +196,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 	switch (map->id) {
 	default:
 		*pacman = (Pacman){(Dynamics){0.0, 0.0, 5.0, 0, 0}, 0, 0.25, false, NULL};
-		pacman->sprite = al_load_bitmap("../../sprites/sprite.png");
+		pacman->sprite = al_load_bitmap("../../sprites/Pac Man.png");
 		pacman->dyn.x = map->w/2.0;
 		pacman->dyn.y = 24.5;
 		*ghosts_n = 4;
@@ -182,14 +205,15 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 		ghosts[1] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
 		ghosts[2] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
 		ghosts[3] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
-		ghosts[0].sprite = al_load_bitmap("../../sprites/sprite.png");
-		ghosts[1].sprite = al_load_bitmap("../../sprites/sprite.png");
-		ghosts[2].sprite = al_load_bitmap("../../sprites/sprite.png");
-		ghosts[3].sprite = al_load_bitmap("../../sprites/sprite.png");
+		ghosts[0].sprite = al_load_bitmap("../../sprites/Ghost Blue.png");
+		ghosts[1].sprite = al_load_bitmap("../../sprites/Ghost Green.png");
+		ghosts[2].sprite = al_load_bitmap("../../sprites/Ghost Purple.png");
+		ghosts[3].sprite = al_load_bitmap("../../sprites/Ghost Red.png");
 		for (int i = 0; i < *ghosts_n; i++) {
-			al_convert_mask_to_alpha(ghosts[i].sprite, al_map_rgb(255, 0, 255)); // Remove fundo magenta
-			if (!ghosts[i].sprite)
+			//al_convert_mask_to_alpha(ghosts[i].sprite, al_map_rgb(255, 0, 255)); // Remove fundo magenta
+			if (!ghosts[i].sprite){
 				return NULL;
+			}
 			ghosts[i].dyn.x = (map->w - *ghosts_n + 1.0)/2.0+i;
 			ghosts[i].dyn.y = 15;
 		}
@@ -250,8 +274,29 @@ void move_pacman (Map *map, Pacman *pacman) {
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
+/* Essa função é executada a todo momento. 
+
+	Se ghosts[i].dyn.direction_x = 1, se move para a direita. Se é -1, se move para a esquerda.
+	Se ghosts[i].dyn.direction_y= 1, se move para cima. Se é -1, se move para baixo.
+*/
 void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
-	for (int i = 0; i < *ghosts_n; i++)
+
+	for (int i = 0; i < *ghosts_n; i++){
+		int random = rand() % 100; // Gera número entre 0 e 100
+
+		// Movimento inicial
+		if(!ghosts[i].dyn.direction_x && !ghosts[i].dyn.direction_y){
+			if(random < 25){
+				ghosts[i].dyn.direction_x = 1;
+			} else if(random < 50){
+				ghosts[i].dyn.direction_x = -1;
+			} else if(random < 75){
+				ghosts[i].dyn.direction_y = 1; 
+			} else{
+				ghosts[i].dyn.direction_y = -1;
+			}
+		}
+
 		if (ghosts[i].dyn.direction_x) {
 			// Movimento
 			ghosts[i].dyn.x += ghosts[i].dyn.direction_x * ghosts[i].dyn.v / FPS; // Move
@@ -260,8 +305,11 @@ void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.x = map->w - 0.5;
 			else if (ghosts[i].dyn.x + 0.5 > map->w)
 				ghosts[i].dyn.x = 0.5;
-			if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*0.5)]) // Se parede, não anda
+			if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*0.5)]){ // Se parede, não anda
 				ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + ghosts[i].size;
+				change_direction(ghosts, ghosts_n); // Muda de direção ao bater
+			}
+				
 		} else if (ghosts[i].dyn.direction_y) {
 			// Movimento
 			ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + 0.5; // Centraliza
@@ -270,7 +318,40 @@ void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.y = map->h - 0.5;
 			else if (ghosts[i].dyn.y + 0.5 > map->h)
 				ghosts[i].dyn.y = 0.5;
-			if (!map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*0.5)][(int)(ghosts[i].dyn.x)]) // Se parede, não anda
+			if (!map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*0.5)][(int)(ghosts[i].dyn.x)]){ // Se parede, não anda
 				ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + ghosts[i].size;
+				change_direction(ghosts, ghosts_n); // Muda de direção ao bater
+			}
+				
 		}
+	}
+}
+
+void change_direction(Ghost *ghosts, int *ghosts_n){
+	for (int i = 0; i < *ghosts_n; i++){
+		int random = rand() % 100; // Gera número entre 0 e 100
+
+		if(ghosts[i].dyn.direction_x){
+			ghosts[i].dyn.direction_x = 0; // Reseta movimento
+
+			if(random < 50){
+				ghosts[i].dyn.direction_y = 1;
+				ghosts[i].movement = 1; // 3 é cima
+			} else {
+				ghosts[i].dyn.direction_y = -1;
+				ghosts[i].movement = 3; // 1 é baixo
+			}
+		}
+		else if(ghosts[i].dyn.direction_y){
+			ghosts[i].dyn.direction_y = 0; // Reseta movimento
+
+			if(random < 50){
+				ghosts[i].dyn.direction_x = 1;
+				ghosts[i].movement = 0; // 0 é direita
+			} else {
+				ghosts[i].dyn.direction_x = -1;
+				ghosts[i].movement = 2; // 2 é esquerda
+			}
+		}
+	}
 }

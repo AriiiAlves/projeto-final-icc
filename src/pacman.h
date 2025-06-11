@@ -9,10 +9,13 @@
 #include <allegro5/mouse.h>                // Suporte ao mouse
 #include <allegro5/keyboard.h>             // Suporte ao teclado
 #include <stdio.h>
+#include <stdlib.h>
 
 #define SPRITE_SIZE 32                     // Tamanho (largura e altura) de cada frame do sprite
-#define SPRITE_COLS 5                      // Número de colunas na spritesheet
-#define SPRITE_ROWS 8                      // Número de linhas na spritesheet (diferentes movimentos)
+#define PACMAN_SPRITE_COLS 9                      // Número de colunas na spritesheet
+#define PACMAN_SPRITE_ROWS 4                      // Número de linhas na spritesheet (diferentes movimentos)
+#define GHOST_SPRITE_COLS 1                      // Número de colunas na spritesheet
+#define GHOST_SPRITE_ROWS 4                      // Número de linhas na spritesheet (diferentes movimentos)
 #define FPS 60
 
 typedef struct Button Button;
@@ -50,6 +53,8 @@ struct Pacman {
 	int points;
 	double size;
 	bool vitamin;
+	int movement;
+	int frame;
 	ALLEGRO_BITMAP *sprite;
 };
 
@@ -58,6 +63,8 @@ struct Ghost {
 	Dynamics dyn;
 	double size;
 	bool vulnerable;
+	int movement;
+	int frame;
 	ALLEGRO_BITMAP *sprite;
 };
 
@@ -75,7 +82,7 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height);
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay);
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n);
 
