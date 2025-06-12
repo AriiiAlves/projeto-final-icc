@@ -55,6 +55,7 @@ struct Pacman {
 	bool vitamin;
 	int movement;
 	int frame;
+	int lifes;
 	ALLEGRO_BITMAP *sprite;
 };
 
@@ -84,7 +85,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
 
-void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n);
+void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
 
 void move_pacman (Map *map, Pacman *pacman);
 
