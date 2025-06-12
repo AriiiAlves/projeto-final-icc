@@ -12,61 +12,68 @@
 #include <stdlib.h>
 
 #define SPRITE_SIZE 32                     // Tamanho (largura e altura) de cada frame do sprite
-#define PACMAN_SPRITE_COLS 9                      // Número de colunas na spritesheet
-#define PACMAN_SPRITE_ROWS 4                      // Número de linhas na spritesheet (diferentes movimentos)
-#define GHOST_SPRITE_COLS 1                      // Número de colunas na spritesheet
-#define GHOST_SPRITE_ROWS 4                      // Número de linhas na spritesheet (diferentes movimentos)
+#define PACMAN_SPRITE_COLS 9               // Número de colunas na spritesheet
+#define PACMAN_SPRITE_ROWS 4               // Número de linhas na spritesheet (diferentes movimentos)
+#define GHOST_SPRITE_COLS 1                // Número de colunas na spritesheet
+#define GHOST_SPRITE_ROWS 4                // Número de linhas na spritesheet (diferentes movimentos)
 #define FPS 60
 
+// Botão
 typedef struct Button Button;
 struct Button {
-	int x_i, x_f, y_i, y_f;
-	bool hover;
+	int x_i, x_f, y_i, y_f;  // Coordenadas inicial e final do retângulo correspondente ao botão
+	bool hover;              // Indica o mouse em cima
 };
 
+// Obsoleto --> Thumbnails serão removidas do maps_menu
 typedef struct Image Image;
 struct Image {
 	ALLEGRO_BITMAP *img;
 	int w, h;
 };
 
+// Mapa
 typedef struct Map Map;
 struct Map {
-	int **m;
-	int id;
-	int w, h;
-	int x_i, x_f, y_i, y_f;
-	double x_fac, y_fac;
-	double pellet_rad, vitamin_rad;
+	int **m;                          // Matriz que contém o mapa em si: paredes, pellets, vitaminas e vazio;
+	int id;                           // Id do mapa utilizado
+	int w, h;                         // Tamanho do mapa (aka dimensões da matriz != dimensões na tela)
+	int x_i, x_f, y_i, y_f;           // Coordenadas inicial e final do retângulo em que o mapa será desenhado na tela
+	double x_fac, y_fac;              // Fator de conversão mapa --> pixels
+	double pellet_rad, vitamin_rad;   // Define o tamanho radial das pellets e da vitamina
+	int pellet_n;                     // Conta as pellets restantes
 };
 
+// Informações dinâmicas (movimento) comuns ao Pacman e os fantasmas
 typedef struct Dynamics Dynamics;
 struct Dynamics {
-	double x, y;
-	double v;
-	int direction_x, direction_y;
+	double x, y;                    // Posição
+	double v;                       // Módulo da velocidade
+	int direction_x, direction_y;   // Versor da direção. Ambos só podem receber +/-1, mas nunca ao mesmo tempo, de forma a formar as 4 direções
 };
 
+// Pacman
 typedef struct Pacman Pacman;
 struct Pacman {
-	Dynamics dyn;
-	int points;
-	double size;
-	bool vitamin;
-	int lives;
-	int movement;
-	int frame;
-	ALLEGRO_BITMAP *sprite;
+	Dynamics dyn;              // Informações relacionadas ao movimento
+	int points;                // Pontos
+	double size;               // Tamanho "radial" do Pacman em relação ao mapa. Geralmente usado para colisões e desenhá-lo
+	bool vitamin;              // True = efeito da vitamina ativado
+	int lives;                 // Número de vidas
+	int movement;              // Id do movimento, o qual corresponde à linha da spite sheet que deve ser utilizada
+	int frame;                 // Id da coluna da sprite sheet que deve ser utilizada
+	ALLEGRO_BITMAP *sprite;    // Sprite sheet
 };
 
+// Fantasma
 typedef struct Ghost Ghost;
 struct Ghost {
-	Dynamics dyn;
-	double size;
-	bool vulnerable;
-	int movement;
-	int frame;
-	ALLEGRO_BITMAP *sprite;
+	Dynamics dyn;              // Informações relacionadas ao movimento
+	double size;               // Tamanho "radial" do Pacman em relação ao mapa. Geralmente usado para colisões e desenhá-lo
+	bool vulnerable;           // Indica que o Pacman comeu a vitamina e ele pode ser comido
+	int movement;              // Id do movimento, o qual corresponde à linha da spite sheet que deve ser utilizada
+	int frame;                 // Id da coluna da sprite sheet que deve ser utilizada
+	ALLEGRO_BITMAP *sprite;    // Sprite sheet
 };
 
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
@@ -87,7 +94,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
 
-void move_pacman (Map *map, Pacman *pacman);
+bool move_pacman (Map *map, Pacman *pacman);
 
 void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n);
 

@@ -14,12 +14,11 @@ int main() {
 	int width = 1920, height = 1080; // Valores padrão caso o Allegro falhe em obter os do sistema
 	double sprite_timer = 0.0; // Timer do sprite
 	double sprite_delay = 0.05; // Delay entre um sprite e outro
-	srand(time(NULL)); // Inicializa o randomizado usando o timestamp atual como semente
 
 	start(&display, &queue, &timer, &width, &height);
 
 	int menu_id = 0;
-	Map map = (Map){NULL, 0, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0, 0.125, 0.375};
+	Map map = (Map){NULL, 0, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0, 0.125, 0.375, 0};
 	bool running = true;      // Indica se a aplicação deve continuar executando
 
 	if (!load_media(&font, &title_font, &menu_sample, &game_sample, &background))
