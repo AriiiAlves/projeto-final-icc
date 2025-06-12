@@ -22,12 +22,10 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
-	int game_running = 1; // Indica se continua rodando o jogo
+	bool game_running = true; // Indica se continua rodando o jogo
 	int defeat_active = 0; // Indica se há derrota para se relacionar com a tecla enter
 
-	pacman.lifes = 3; // Quantidade de vidas inicial
-
-	while (game_running) {
+	while (*running && game_running) {
 		al_wait_for_event(*queue, ev);
 		// Tratamento dos eventos recebidos
 		switch (ev->type) {
@@ -96,11 +94,11 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 				//*running = false;
 				// Volta ao menu principal
 				*menu_id = 0;
-				game_running = 0;
+				game_running = false;
 			}
 			// NOVO (Após colidir com um fantasma)
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ENTER){
-				if(defeat_active && pacman.lifes >= 1){
+				if (defeat_active && pacman.lives >= 1){
 					// Desativa indicador de derrota
 					defeat_active = 0;
 					// Retorna pacman e fantasmas à posição inicial
@@ -114,15 +112,15 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 
 					// Devolve velocidades (qual a velocidade inicial mesmo?)
 					pacman.dyn.v=5;
-					for(int i = 0; i < ghosts_n; i++){
+					for (int i = 0; i < ghosts_n; i++){
 						ghosts[i].dyn.v=5;
 					}
 				}
-				else if(defeat_active){
+				else if (defeat_active){
 					// Volta ao menu principal
 					defeat_active = 0; 
 					// Interrompe loop do jogo
-					game_running = 0;
+					game_running = false;
 					// Desativa indicador de derrota
 					menu_id = 0;
 				}
@@ -203,12 +201,12 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 		al_draw_bitmap_region(ghosts[i].sprite, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-0.4), map->y_i+map->y_fac*(ghosts[i].dyn.y-0.4), 0);
 
 	char show_points[50]; // Espaço para armazenar o texto formatado
-	char show_lifes[10];
+	char show_lives[10];
 	sprintf(show_points, "Points: %d", pacman->points);
-	sprintf(show_lifes, "Lifes: %d", pacman->lifes);
+	sprintf(show_lives, "Lifes: %d", pacman->lives);
 
 	al_draw_text(*font, al_map_rgb(255, 255, 255), *width-275, *height-100, ALLEGRO_ALIGN_LEFT, show_points);
-	al_draw_text(*font, al_map_rgb(255, 255, 255), *width-275, *height-150, ALLEGRO_ALIGN_LEFT, show_lifes);
+	al_draw_text(*font, al_map_rgb(255, 255, 255), *width-275, *height-150, ALLEGRO_ALIGN_LEFT, show_lives);
 
 		/*
 	ALLEGRO_COLOR b_color = al_map_rgb(0,180,255),
@@ -243,16 +241,16 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 	Ghost* ghosts;
 	switch (map->id) {
 	default:
-		*pacman = (Pacman){(Dynamics){0.0, 0.0, 5.0, 0, 0}, 0, 0.25, false, NULL};
+		*pacman = (Pacman){(Dynamics){0.0, 0.0, 5.0, 0, 0}, 0, 0.25, false, 3, 0, 0, NULL};
 		pacman->sprite = al_load_bitmap("../../sprites/Pac Man.png");
 		pacman->dyn.x = map->w/2.0;
 		pacman->dyn.y = 24.5;
 		*ghosts_n = 4; // Número de fantasmas
 		ghosts = malloc(*ghosts_n * sizeof(Ghost));
-		ghosts[0] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
-		ghosts[1] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL}; // Apenas um fantasma (DEBUG)
-		ghosts[2] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
-		ghosts[3] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, NULL};
+		ghosts[0] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, 0, 0, NULL};
+		ghosts[1] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, 0, 0, NULL}; // Apenas um fantasma (DEBUG)
+		ghosts[2] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, 0, 0, NULL};
+		ghosts[3] = (Ghost){(Dynamics){0.0, 0.0, 5.1, 0, 0}, 0.25, false, 0, 0, NULL};
 		ghosts[0].sprite = al_load_bitmap("../../sprites/Ghost Blue.png");
 		ghosts[1].sprite = al_load_bitmap("../../sprites/Ghost Green.png");
 		ghosts[2].sprite = al_load_bitmap("../../sprites/Ghost Purple.png");
@@ -323,10 +321,10 @@ void move_pacman (Map *map, Pacman *pacman) {
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
 /* Essa função é executada a todo momento. 
-
-	Se ghosts[i].dyn.direction_x = 1, se move para a direita. Se é -1, se move para a esquerda.
-	Se ghosts[i].dyn.direction_y= 1, se move para cima. Se é -1, se move para baixo.
+ * Se ghosts[i].dyn.direction_x = 1, se move para a direita. Se é -1, se move para a esquerda.
+ * Se ghosts[i].dyn.direction_y= 1, se move para cima. Se é -1, se move para baixo.
 */
+
 void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 
 	for (int i = 0; i < *ghosts_n; i++){
@@ -374,9 +372,11 @@ void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
 	}
 }
 
+/*-------------------------------------------------------------------------------------------------------------------------*/
+
 // Funções novas
 
-void change_direction(Ghost *ghost){
+void change_direction (Ghost *ghost) {
 	int random = rand() % 100; // Gera número entre 0 e 100
 
 	if(ghost->dyn.direction_x){
@@ -403,11 +403,11 @@ void change_direction(Ghost *ghost){
 	}
 }
 
-/*
-Verifica se há colisão. Se há, para todos os personagens e o jogador tem que apertar enter para iniciar de novo com outra vida.
+/*-------------------------------------------------------------------------------------------------------------------------*/
 
-*/
-void verify_defeat(Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active){
+// Verifica se há colisão. Se há, para todos os personagens e o jogador tem que apertar enter para iniciar de novo com outra vida.
+
+void verify_defeat (Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active) {
 	// Verifica se o jogador perdeu
 	for(int i = 0; i < *ghosts_n; i++){
 		if((int)pacman->dyn.x == (int)ghosts[i].dyn.x  && (int)pacman->dyn.y == (int)ghosts[i].dyn.y && !*defeat_active){
@@ -418,11 +418,11 @@ void verify_defeat(Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_act
 			}
 
 			// Perde vida
-			pacman->lifes -= 1;
+			pacman->lives -= 1;
 
 			// Derrota ativa
 			*defeat_active = 1;
-			printf("\nDerrota\n");
+//			printf("\nDerrota\n");
 		}
 	}
 }

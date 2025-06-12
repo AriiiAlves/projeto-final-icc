@@ -53,9 +53,9 @@ struct Pacman {
 	int points;
 	double size;
 	bool vitamin;
+	int lives;
 	int movement;
 	int frame;
-	int lifes;
 	ALLEGRO_BITMAP *sprite;
 };
 
@@ -73,7 +73,7 @@ void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIME
 
 bool load_media (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, ALLEGRO_SAMPLE **menu_sample, ALLEGRO_SAMPLE **game_sample, ALLEGRO_BITMAP **background);
 
-int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_BITMAP **background);
+int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_BITMAP *background);
 
 void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Button *b, const int *b_n, const int *select, ALLEGRO_BITMAP **background, int width, int height);
 
@@ -90,6 +90,10 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 void move_pacman (Map *map, Pacman *pacman);
 
 void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n);
+
+void change_direction (Ghost *ghost);
+
+void verify_defeat (Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active);
 
 void get_map (int map_id, Map *map);
 

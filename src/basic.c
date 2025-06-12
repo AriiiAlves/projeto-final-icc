@@ -68,7 +68,7 @@ bool load_media (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, ALLEGRO_SAMPLE 
 
 	// Imagem de fundo menu
 	*background = al_load_bitmap("../../imagens/menu.png");
-	if (!background) {
+	if (!(*background)) {
 		printf("Erro ao carregar a imagem de fundo.\n");
 		return false;
 	}

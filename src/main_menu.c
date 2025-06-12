@@ -1,6 +1,6 @@
 #include"pacman.h"
 
-int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_BITMAP **background) {
+int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_BITMAP *background) {
 	int next_menu = -1;
 	int b_n = 3;
 	Button* b;
@@ -59,7 +59,7 @@ int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 			break;
 		}
 		if (redraw && al_is_event_queue_empty(*queue)) {
-			main_menu_show(&font, &title_font, b, &b_n, &select, background, width, height);
+			main_menu_show(&font, &title_font, b, &b_n, &select, &background, width, height);
 			redraw = false;
 		}
 	}
@@ -73,9 +73,7 @@ void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Butto
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 
 	// Imagem de fundo
-	al_draw_scaled_bitmap(background, 
-                      0, 0, al_get_bitmap_width(background), al_get_bitmap_height(background),
-                      0, 0, width, height, 0);
+	al_draw_scaled_bitmap(*background, 0, 0, al_get_bitmap_width(*background), al_get_bitmap_height(*background), 0, 0, width, height, 0);
 
 	ALLEGRO_COLOR b_color = al_map_rgb(255, 255, 102),
 		      b_color_hover = al_map_rgb(204, 204, 0);
