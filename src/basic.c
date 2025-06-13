@@ -98,7 +98,7 @@ void get_map (int map_id, Map *map) {
 	char *line = malloc((map->w+1) * sizeof(char)); // Lê a linha inteira do mapa de uma vez só, para evitar bugs com os \n
 	for (int i = 0; i < map->h; i++) {
 		fscanf(map_file, "%s ", line); // Lê a linha
-		for (int j = 0; j < map->w; j++) {1
+		for (int j = 0; j < map->w; j++) {
 			// Guarda na matriz de acordo com cada caractere da linha lida
 			switch (line[j]) {
 			default: // Wall
