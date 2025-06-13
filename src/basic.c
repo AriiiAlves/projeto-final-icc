@@ -90,6 +90,8 @@ void get_map (int map_id, Map *map) {
 	default:
 		map_file = fopen("../../mapas/original.txt", "r");
 		break;
+	case 1:
+		map_file = fopen("../../mapas/dungeon.txt", "r");
 	}
 	fscanf(map_file, "%d %d", &map->w, &map->h);
 	map->m = malloc(map->h * sizeof(int*));
@@ -117,6 +119,8 @@ void get_map (int map_id, Map *map) {
 			case '4': // Door of the ghosts' beginning
 				map->m[i][j] = 4;
 				break;
+			case '5':
+				map->m[i][j] = 8;
 
 			}
 		}

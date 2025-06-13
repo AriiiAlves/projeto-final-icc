@@ -18,7 +18,7 @@ int main() {
 	start(&display, &queue, &timer, &width, &height);
 
 	int menu_id = 0;
-	Map map = (Map){NULL, 0, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0, 0.125, 0.375, 0};
+	Map map = (Map){NULL, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.125, 0.375, 0};
 	bool running = true;      // Indica se a aplicação deve continuar executando
 
 	if (!load_media(&font, &title_font, &menu_sample, &game_sample, &background))

@@ -16,6 +16,8 @@
 #define PACMAN_SPRITE_ROWS 4               // Número de linhas na spritesheet (diferentes movimentos)
 #define GHOST_SPRITE_COLS 1                // Número de colunas na spritesheet
 #define GHOST_SPRITE_ROWS 4                // Número de linhas na spritesheet (diferentes movimentos)
+#define PACMAN_V_0 5
+#define GHOSTS_V_0 5.5
 #define FPS 60
 
 // Botão
@@ -47,7 +49,8 @@ struct Map {
 // Informações dinâmicas (movimento) comuns ao Pacman e os fantasmas
 typedef struct Dynamics Dynamics;
 struct Dynamics {
-	double x, y;                    // Posição
+	double start_x, start_y;        // Posição inicial da entidade. Retorna para tal, no caso de morte
+	double x, y;                    // Posição atual
 	double v;                       // Módulo da velocidade
 	int direction_x, direction_y;   // Versor da direção. Ambos só podem receber +/-1, mas nunca ao mesmo tempo, de forma a formar as 4 direções
 };
