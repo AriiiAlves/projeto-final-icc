@@ -117,11 +117,116 @@ void get_map (int map_id, Map *map) {
 			case '4': // Door of the ghosts' beginning
 				map->m[i][j] = 4;
 				break;
-
+			case '5': // Empty Ghost large area move control
+				map->m[i][j] = 5;
+				break;
 			}
 		}
 	}
 	fclose(map_file);
+
+	// Debug
+	// for(int i = 0; i < map->h; i++){
+	// 	printf("[");
+	// 	for(int j = 0; j < map-> w; j++){
+	// 		printf("%d, ", map->m[i][j]);
+	// 	}
+	// 	printf("]\n");
+	// }
+}
+
+/*-------------------------------------------------------------------------------------------------------------------------*/
+// Testing (Ariel) ------- Nodemap -> [Up, Down, Right, Left]
+
+/*
+Só será nó se for canto (2 vias diferentes, não opostas) ou se tiver 3 ou 4 vias.
+
+[1,1,1,1] -> [cima, baixo, direita, esquerda]
+
+[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+[[0,0,0,0],[0,1,1,0],[0,1,0,1],[0,0,0,0]]
+[[0,0,0,0],[1,0,1,0],[1,0,0,1],[0,0,0,0]]
+[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+*/
+
+void get_node_map(Map *map, NodeMap *nodemap){
+
+	nodemap->m = calloc(map->h, sizeof(int**));
+	for(int i = 0; i < map->h; i++){
+		nodemap->m[i] = calloc(map->w, sizeof(int*));
+		for(int j = 0; j < map->w; j++){
+			nodemap->m[i][j] = calloc(4, sizeof(int));
+		}	
+	}
+
+	nodemap->h = map->h;
+	nodemap->w = map-> w;
+
+	// Segmentation fault aqui !!!
+	for(int i = 0; i < map->h; i++){
+		for(int j = 0; j < map->w; j++){
+
+			bool x_flag = false;
+			bool y_flag = false;
+
+			// Verifica se não é parede (parede é 0) e se não é posição de algoritmo de colisão (5)
+			if(map->m[i][j] && map->m[i][j] != 5){
+				// Verifica se é nó, evitando acessar índice não existente
+				if(i+1 < map->h){
+					// Verifica espaço livre (cima)
+					if(map->m[i+1][j]){
+						x_flag = true;
+						nodemap->m[i][j][0] = 1;
+					}
+				}
+				if(i-1 >= 0){
+					// verifica espaço livre (baixo)
+					if(map->m[i-1][j]){
+						x_flag = true;
+						nodemap->m[i][j][1] = 1;
+					}
+				}
+				if(j+1 < map->w){
+					// Verifica  espaço livre (direita)
+					if(map->m[i][j+1]){
+						y_flag = true;
+						nodemap->m[i][j][2] = 1;
+					}
+				}
+				if(j-1 >= 0){
+					// Verifica espaço livre (esquerda)
+					if(map->m[i][j-1]){
+						y_flag = true;
+						nodemap->m[i][j][3] = 1;
+					}
+				}
+
+				// Se não tiver no mínimo 2 direções perpendiculares, não é um nó (nós serão cantos com saídas perpendiculares e vias de 3 ou 4 caminhos)
+				if(!x_flag || !y_flag){
+					for(int k = 0; k < 4; k++){
+						nodemap->m[i][j][k] = 0;
+					}
+				} 
+			} else{
+				for(int k = 0; k < 4; k++){
+					nodemap->m[i][j][k] = 0;
+				}
+			}
+		}
+	}
+	// Debug
+	// printf("\n\n");
+	// for (int i = 0; i < nodemap->h; i++) {
+    //     printf("[", i);
+    //     for (int j = 0; j < nodemap->w; j++) {
+	// 		if(nodemap->m[i][j][0] || nodemap->m[i][j][1] || nodemap->m[i][j][2] || nodemap->m[i][j][3]){
+	// 			printf("Nó, ");
+	// 		} else{
+	// 			printf("  , ");
+	// 		}
+    //     }
+	// 	printf("]\n");
+    // }
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*/

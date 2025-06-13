@@ -65,6 +65,12 @@ struct Pacman {
 	ALLEGRO_BITMAP *sprite;    // Sprite sheet
 };
 
+typedef struct NodeCoord NodeCoord;
+struct NodeCoord{
+	int x;
+	int y;
+};
+
 // Fantasma
 typedef struct Ghost Ghost;
 struct Ghost {
@@ -73,7 +79,16 @@ struct Ghost {
 	bool vulnerable;           // Indica que o Pacman comeu a vitamina e ele pode ser comido
 	int movement;              // Id do movimento, o qual corresponde à linha da spite sheet que deve ser utilizada
 	int frame;                 // Id da coluna da sprite sheet que deve ser utilizada
+
+	NodeCoord last_node;
 	ALLEGRO_BITMAP *sprite;    // Sprite sheet
+};
+
+// Testing (Ariel)
+typedef struct NodeMap NodeMap;
+struct NodeMap {
+	int ***m; // Matriz 2x2 que contém vetores 1x4
+	int w, h;
 };
 
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
@@ -90,19 +105,21 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
 
 bool move_pacman (Map *map, Pacman *pacman);
 
-void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n);
+void move_ghosts (Map *map,NodeMap *nodemap, Ghost *ghosts, int *ghosts_n);
 
 void change_direction (Ghost *ghost);
 
 void verify_defeat (Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active);
 
 void get_map (int map_id, Map *map);
+
+void get_node_map(Map *map, NodeMap *nodemap);
 
 void free_map (Map *map);
 
