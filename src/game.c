@@ -1,7 +1,7 @@
 #include"pacman.h"
 
 // Loop principal do jogo
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id) {
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay) {
 	// Inicializa entidades
 	Pacman pacman;
 	int ghosts_n;
@@ -118,27 +118,26 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 					pacman.movement = 0; // 0 é direita
 				}
 			// DEBUG, aka impaciência
-			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_PLUS){
+			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_PLUS) {
 				pacman.dyn.v += 1;
-				for(int i = 0; i < ghosts_n; i++){
+				for(int i = 0; i < ghosts_n; i++) {
 					ghosts[i].dyn.v += 1;
 				}
 			}
-			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_MINUS){
+			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_MINUS) {
 				pacman.dyn.v -= 1;
-				for(int i = 0; i < ghosts_n; i++){
+				for(int i = 0; i < ghosts_n; i++) {
 					ghosts[i].dyn.v -= 1;
 				}
 			}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_EQUALS)
-				pacman.dyn.v += 0.1;
+				pacman.dyn.v += 1;
 			if (ev->keyboard.keycode == ALLEGRO_KEY_MINUS)
-				pacman.dyn.v -= 0.1;
+				pacman.dyn.v -= 1;
 			// Pausa o jogo --> Todo
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
 				//*running = false;
 				// Volta ao menu principal
-				*menu_id = 0;
 				game_running = false;
 			}
 			// Após colidir com um fantasma
@@ -168,7 +167,6 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 					// Interrompe loop do jogo
 					game_running = false;
 					// Desativa indicador de derrota
-					menu_id = 0;
 				}
 			}
 			break;
@@ -221,6 +219,8 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 		}
 	}
 	// Libera os espaços alocados e volta para o menu principal
+	free(g1);
+	free(g2);
 	free(b);
 	free(ghosts);
 	free_map(map);

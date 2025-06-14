@@ -45,11 +45,15 @@ int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 			if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT || ev->keyboard.keycode == ALLEGRO_KEY_DOWN) {
 				if (select < 0)
 					select = 0;
-			else if (++select == b_n)
+			else if (++select >= b_n)
 					select -= b_n;
 			}
-			if (select >= 0 && ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
-				select = -1;
+			if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+				if (select >= 0)
+					select = -1;
+				else
+					*running = false;
+			}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ENTER || ev->keyboard.keycode == ALLEGRO_KEY_PAD_ENTER)
 				if (select >= 0)
 					next_menu = select+1;

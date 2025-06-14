@@ -16,9 +16,10 @@
 #define PACMAN_SPRITE_ROWS 4               // Número de linhas na spritesheet (diferentes movimentos)
 #define GHOST_SPRITE_COLS 1                // Número de colunas na spritesheet
 #define GHOST_SPRITE_ROWS 4                // Número de linhas na spritesheet (diferentes movimentos)
-#define PACMAN_V_0 5
-#define GHOSTS_V_0 5.5
-#define FPS 60
+#define PACMAN_V_0 5                       // Velocidade padrão do pacman
+#define GHOSTS_V_0 5.5                     // Velocidade padrão dos fantasmas
+#define MAPS_N 2                           // Número de mapas
+#define FPS 60                             // Taxa de atualização da tela
 
 // Botão
 typedef struct Button Button;
@@ -89,11 +90,11 @@ void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Butto
 
 int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map);
 
-void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Image *thumbs, int *thumbs_n);
+void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *maps_n, const int *map_sel, Map *map, char **names);
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay);
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
 

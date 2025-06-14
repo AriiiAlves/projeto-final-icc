@@ -132,7 +132,10 @@ void get_map (int map_id, Map *map) {
 
 // Desaloca o mapa
 void free_map (Map *map) {
-	for (int i = 0; i < map->w; i++)
+	map->id = -1;
+	if (map->m == NULL)
+		return;
+	for (int i = 0; i < map->h; i++)
 		free(map->m[i]);
 	free(map->m);
 	map->m = NULL;
