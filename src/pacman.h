@@ -106,7 +106,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
 
-bool move_pacman (Map *map, Pacman *pacman);
+bool move_pacman (Map *map, Pacman *pacman, bool *win);
 
 void move_ghosts (Map *map,NodeMap *nodemap, Ghost *ghosts, int *ghosts_n);
 
@@ -114,7 +114,11 @@ int isnode(NodeMap *nodemap, int x, int y);
 
 void change_direction (Ghost *ghost);
 
+double apply_vitamin (bool turn_on_effect, Pacman *pacman, Ghost *ghosts, int *ghosts_n, Map *map, NodeMap *nodemap);
+
 void verify_defeat (Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active);
+
+void winners_message (Pacman *pacman, Ghost *ghosts, int *ghosts_n);
 
 void get_map (int map_id, Map *map);
 

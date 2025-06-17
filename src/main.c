@@ -47,10 +47,10 @@ int main() {
 		case 1:
 			al_stop_sample_instance(menu_sample_instance);
 			al_play_sample_instance(game_sample_instance);
-			if (map.m == NULL) {
+			if (map.m == NULL)
 				get_map(rand() % MAPS_N, &map); // Obtém mapa
+			if (nodemap.m == NULL)
 				get_node_map(&map, &nodemap); // Obtém mapa de nós
-			}
 			menu_id = game(&ev, &queue, &running, &map, &nodemap, font, width, height, &timer, &sprite_timer, &sprite_delay, &menu_id);
 			break;
 		case 2:
