@@ -28,13 +28,6 @@ struct Button {
 	bool hover;              // Indica o mouse em cima
 };
 
-// Obsoleto --> Thumbnails serão removidas do maps_menu
-typedef struct Image Image;
-struct Image {
-	ALLEGRO_BITMAP *img;
-	int w, h;
-};
-
 // Mapa
 typedef struct Map Map;
 struct Map {
@@ -109,17 +102,15 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *maps_n, co
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
-<<<<<<< HEAD
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay);
-=======
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
->>>>>>> origin/ariel_edit
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
 
 bool move_pacman (Map *map, Pacman *pacman);
 
 void move_ghosts (Map *map,NodeMap *nodemap, Ghost *ghosts, int *ghosts_n);
+
+int isnode(NodeMap *nodemap, int x, int y);
 
 void change_direction (Ghost *ghost);
 
@@ -130,5 +121,7 @@ void get_map (int map_id, Map *map);
 void get_node_map(Map *map, NodeMap *nodemap);
 
 void free_map (Map *map);
+
+void free_node_map (NodeMap *nodemap);
 
 void destroy_all (ALLEGRO_SAMPLE_INSTANCE **sample_instance, ALLEGRO_SAMPLE **sample, ALLEGRO_FONT **font, ALLEGRO_TIMER **timer, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_DISPLAY **display);

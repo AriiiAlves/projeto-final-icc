@@ -119,15 +119,12 @@ void get_map (int map_id, Map *map) {
 			case '4': // Door of the ghosts' beginning
 				map->m[i][j] = 4;
 				break;
-<<<<<<< HEAD
-			case '5':
-				map->m[i][j] = 8;
-
-=======
 			case '5': // Empty Ghost large area move control
 				map->m[i][j] = 5;
 				break;
->>>>>>> origin/ariel_edit
+			case '8':
+				map->m[i][j] = 8;
+				break;
 			}
 		}
 	}
@@ -158,28 +155,27 @@ Só será nó se for canto (2 vias diferentes, não opostas) ou se tiver 3 ou 4 
 */
 
 void get_node_map(Map *map, NodeMap *nodemap){
+	nodemap->h = map->h;
+	nodemap->w = map-> w;
 
-	nodemap->m = calloc(map->h, sizeof(int**));
-	for(int i = 0; i < map->h; i++){
-		nodemap->m[i] = calloc(map->w, sizeof(int*));
-		for(int j = 0; j < map->w; j++){
+	nodemap->m = calloc(nodemap->h, sizeof(int**));
+	for(int i = 0; i < nodemap->h; i++){
+		nodemap->m[i] = calloc(nodemap->w, sizeof(int*));
+		for(int j = 0; j < nodemap->w; j++){
 			nodemap->m[i][j] = calloc(4, sizeof(int));
 		}	
 	}
 
-	nodemap->h = map->h;
-	nodemap->w = map-> w;
-
-	for(int i = 0; i < map->h; i++){
-		for(int j = 0; j < map->w; j++){
+	for(int i = 0; i < nodemap->h; i++){
+		for(int j = 0; j < nodemap->w; j++){
 
 			bool x_flag = false;
 			bool y_flag = false;
 
 			// Verifica se não é parede (parede é 0) e se não é posição de algoritmo de colisão (5)
-			if(map->m[i][j] && map->m[i][j] != 5){
+			if((map->m[i][j] % 5)){
 				// Verifica se é nó, evitando acessar índice não existente
-				if(i+1 < map->h){
+				if(i+1 < nodemap->h){
 					// Verifica espaço livre (cima)
 					if(map->m[i+1][j]){
 						x_flag = true;
@@ -214,7 +210,7 @@ void get_node_map(Map *map, NodeMap *nodemap){
 						nodemap->m[i][j][k] = 0;
 					}
 				} 
-			} else{
+			} else {
 				for(int k = 0; k < 4; k++){
 					nodemap->m[i][j][k] = 0;
 				}
@@ -247,4 +243,19 @@ void free_map (Map *map) {
 		free(map->m[i]);
 	free(map->m);
 	map->m = NULL;
+}
+
+/*-------------------------------------------------------------------------------------------------------------------------*/
+
+// Desaloca o mapa
+void free_node_map (NodeMap *nodemap) {
+	if (nodemap->m == NULL)
+		return;
+	for (int i = 0; i < nodemap->h; i++) {
+		for (int j = 0; j < nodemap->w; j++)
+			free(nodemap->m[i][j]);
+		free(nodemap->m[i]);
+	}	
+	free(nodemap->m);
+	nodemap->m = NULL;
 }

@@ -18,12 +18,8 @@ int main() {
 	start(&display, &queue, &timer, &width, &height);
 
 	int menu_id = 0;
-<<<<<<< HEAD
 	Map map = (Map){NULL, -1, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.125, 0.375, 0};
-=======
-	Map map = (Map){NULL, 0, 0, 0, width*(0.5-0.25), width*(0.5+0.25), height*(0.54-0.44), height*(0.54+0.44), 0.0, 0.0, 0.125, 0.375, 0};
 	NodeMap nodemap = (NodeMap){NULL, 0, 0}; // Nodemap declarado
->>>>>>> origin/ariel_edit
 	bool running = true;      // Indica se a aplicação deve continuar executando
 
 	if (!load_media(&font, &title_font, &menu_sample, &game_sample, &background))
@@ -51,15 +47,11 @@ int main() {
 		case 1:
 			al_stop_sample_instance(menu_sample_instance);
 			al_play_sample_instance(game_sample_instance);
-			if (map.m == NULL)
-<<<<<<< HEAD
-				get_map(rand() % MAPS_N, &map);
-			menu_id = game(&ev, &queue, &running, &map, font, width, height, &timer, &sprite_timer, &sprite_delay);
-=======
-				get_map(0, &map); // Obtém mapa
+			if (map.m == NULL) {
+				get_map(rand() % MAPS_N, &map); // Obtém mapa
 				get_node_map(&map, &nodemap); // Obtém mapa de nós
+			}
 			menu_id = game(&ev, &queue, &running, &map, &nodemap, font, width, height, &timer, &sprite_timer, &sprite_delay, &menu_id);
->>>>>>> origin/ariel_edit
 			break;
 		case 2:
 			menu_id = maps_menu(&ev, &queue, &running, font, width, height, &map);

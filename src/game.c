@@ -1,11 +1,7 @@
 #include"pacman.h"
 
 // Loop principal do jogo
-<<<<<<< HEAD
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay) {
-=======
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id) {
->>>>>>> origin/ariel_edit
 	// Inicializa entidades
 	Pacman pacman;
 	int ghosts_n;
@@ -195,8 +191,10 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 					ghosts[i].vulnerable = false;
 				for (int i = 0; i < map->h; i++)
 					for (int j = 0; j < map->w; j++)
-						if (map->m[i][j] == 5)
+						if (map->m[i][j] == 10)
 							map->m[i][j] = 8;
+				free_node_map(nodemap);
+				get_node_map(map, nodemap);
 			}
 			// Movimento e detecção da vitamina
 			if (move_pacman(map, &pacman)) {
@@ -205,7 +203,9 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 				for (int i = 0; i < map->h; i++)
 					for (int j = 0; j < map->w; j++)
 						if (map->m[i][j] == 8)
-							map->m[i][j] = 5;
+							map->m[i][j] = 10;
+				free_node_map(nodemap);
+				get_node_map(map, nodemap);
 				vitamin_time = 10.0;
 			}
 			move_ghosts(map, nodemap, ghosts, &ghosts_n); // Move fantasmas
@@ -296,31 +296,19 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 	switch (map->id) {
 	default:
 		// Pacman
-<<<<<<< HEAD
 		*pacman = (Pacman){(Dynamics){0.0, 0.0, 0.0, 0.0, PACMAN_V_0, 0, 0}, 0, 0.51, false, 3, 0, 0, NULL};
 		pacman->sprite = al_load_bitmap("../../sprites/Pac_Man.png");
 		pacman->dyn.start_x = map->w/2.0;
 		pacman->dyn.start_y = 24.5;
 		pacman->dyn.x = pacman->dyn.start_x;
 		pacman->dyn.y = pacman->dyn.start_y;
-=======
-		*pacman = (Pacman){(Dynamics){0.0, 0.0, 5.0, 0, 0}, 0, 0.51, false, 3, 0, 0, NULL};
-		pacman->sprite = al_load_bitmap("../../sprites/Pac Man.png");
-		pacman->dyn.x = map->w/2.0;
-		pacman->dyn.y = 24.5;
->>>>>>> origin/ariel_edit
 
 		// Fantasmas
 		*ghosts_n = 4; // Número de fantasmas
 		ghosts = malloc(*ghosts_n * sizeof(Ghost));
 		for (int i = 0; i < *ghosts_n; i++) {
-<<<<<<< HEAD
-			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, NULL};
+			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord) {0, 0}, NULL};
 			ghosts[i].sprite = al_load_bitmap(ghosts_path[i%4]);
-=======
-			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 5.5, 0, 0}, 0.51, false, 0, 0,(NodeCoord) {0, 0}, NULL};
-			ghosts[i].sprite = al_load_bitmap(ghosts_path[i]);
->>>>>>> origin/ariel_edit
 		}
 		// Centraliza os fantasmas
 		for (int i = 0; i < *ghosts_n; i++) {
@@ -346,7 +334,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 		*ghosts_n = 30; // Número de fantasmas
 		ghosts = malloc(*ghosts_n * sizeof(Ghost));
 		for (int i = 0; i < *ghosts_n; i++) {
-			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, NULL};
+			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord){0, 0}, NULL};
 			ghosts[i].sprite = al_load_bitmap(ghosts_path[i%4]);
 		}
 		// Inicializa a posição dos fantasmas
@@ -441,192 +429,6 @@ bool move_pacman (Map *map, Pacman *pacman) {
 	}
 	return false;
 }
-
-/*-------------------------------------------------------------------------------------------------------------------------*/
-
-/* Essa função é executada a todo momento. 
- * Se ghosts[i].dyn.direction_x = 1, se move para a direita. Se é -1, se move para a esquerda.
- * Se ghosts[i].dyn.direction_y= 1, se move para cima. Se é -1, se move para baixo.
-*/
-
-// void move_ghosts (Map *map, Ghost *ghosts, int *ghosts_n) {
-// 	for (int i = 0; i < *ghosts_n; i++){
-// 		int random = rand() % 100; // Gera número entre 0 e 100
-
-// 		// Movimento inicial
-// 		if (!ghosts[i].dyn.direction_x && !ghosts[i].dyn.direction_y){
-// 			if (random < 25){
-// 				ghosts[i].dyn.direction_x = 1;
-// 			} else if (random < 50) {
-// 				ghosts[i].dyn.direction_x = -1;
-// 			} else if (random < 75) {
-// 				ghosts[i].dyn.direction_y = 1; 
-// 			} else {
-// 				ghosts[i].dyn.direction_y = -1;
-// 			}
-// 		}
-		
-// 		//basic_move(&ghosts[i], map);
-
-// 		// PRETENSÃO DE MOVIMENTO EM X
-// 		if (ghosts[i].dyn.direction_x) {
-// 			// Movimento
-// 			ghosts[i].dyn.x += ghosts[i].dyn.direction_x * ghosts[i].dyn.v / FPS; // Move
-// 			ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + 0.5; // Centraliza na outra direção
-
-// 			if (ghosts[i].dyn.x < ghosts[i].size) // Faz o túnel, une as bordas esquerda e direita
-// 				ghosts[i].dyn.x = map->w - ghosts[i].size;
-// 			else if (ghosts[i].dyn.x + ghosts[i].size > map->w)
-// 				ghosts[i].dyn.x = ghosts[i].size;
-			
-// 			// TRATAMENTO DE COLISÕES
-// 			if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*ghosts[i].size)]){ 
-// 				ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + ghosts[i].size;
-// 				// My code
-// 				printf("\nColisão para esquerda/direita Identificada (AÇÃO)");
-
-// 				ghosts[i].dyn.direction_x = 0;
-// 				// Verifica se ambos (baixo e cima) estão livres (y)
-// 				if(map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x] && map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]){
-// 					printf("\n	Aleatorio cima/baixo: %d, %d", map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x], map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]);
-// 					if(random < 50){
-// 						ghosts[i].dyn.direction_y = 1;
-// 						ghosts[i].movement = 1; // 1 é cima
-// 					} else {
-// 						ghosts[i].dyn.direction_y = -1;
-// 						ghosts[i].movement = 3; // 3 é baixo
-// 					}
-// 				} else if(!map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x]){ // Verifica colisão para cima
-// 					printf("\n	Colisão para cima, baixo livre");
-// 					ghosts[i].dyn.direction_y = -1;
-// 					ghosts[i].movement = 3; // 3 é baixo
-// 				} else{
-// 					printf("\n	Colisão para baixo, cima livre");
-// 					ghosts[i].dyn.direction_y = 1;
-// 					ghosts[i].movement = 1; // 1 é cima
-// 				}
-// 				printf("\n	perp moved = false\n	colide priority = true");
-// 				ghosts[i].perp_moved = false; // Permite se mover perpendicularmente após a colisão
-// 				ghosts[i].colide_priority = true;
-// 				// change_direction(&ghosts[i]); // Muda de direção ao bater
-			
-// 			// CASO NÃO HAJA COLISÃO (VERIFICA LADOS PERPENDICULARES)
-// 			} else if(!ghosts[i].perp_moved && !ghosts[i].colide_priority) { 
-// 				printf("\nSem colisão (AÇÃO)");
-// 				// Verifica se ambos (baixo e cima) estão livres (y)
-// 				if(map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x] && map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]){
-// 					printf("\n	Aleatorio cima/baixo: %d, %d", map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x], map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]);
-// 					if(90 < random < 95){
-// 						ghosts[i].dyn.direction_y = 1;
-// 						ghosts[i].movement = 1; // 1 é cima
-// 					} else if(95 < random && random < 100) {
-// 						ghosts[i].dyn.direction_y = -1;
-// 						ghosts[i].movement = 3; // 3 é baixo
-// 					}
-// 				} else if(map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x]){ // Verifica caminho livre para cima
-// 					if(random > 0){
-// 						printf("\n	Cima: %d, %d", map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x], map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]);
-// 						ghosts[i].dyn.direction_y = 1;
-// 						ghosts[i].movement = 1; // 1 é cima
-// 					}
-// 				} else if(map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]){
-// 					if(random > 0){
-// 						printf("\n	Baixo: %d, %d", map->m[(int)(ghosts[i].dyn.y+ghosts[i].size)][(int)ghosts[i].dyn.x], map->m[(int)(ghosts[i].dyn.y-ghosts[i].size)][(int)ghosts[i].dyn.x]);
-// 						ghosts[i].dyn.direction_y = -1;
-// 						ghosts[i].movement = 3; // 3 é baixo
-// 					}
-// 				}
-// 				if(ghosts[i].dyn.direction_y != 0){
-// 					printf("\n	Perp moved = true");
-// 					ghosts[i].dyn.direction_x = 0;
-// 					ghosts[i].perp_moved = true;
-// 				}
-// 			}
-// 			else if(ghosts[i].colide_priority){
-// 				ghosts[i].colide_priority = false;
-// 				printf("\n	colide priority = false");
-// 			}
-				
-// 		// PRETENSÃO DE MOVIMENTO EM Y
-// 		} else if (ghosts[i].dyn.direction_y) {
-// 			// Movimento
-// 			ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + 0.5; // Centraliza na outra direção
-// 			ghosts[i].dyn.y += ghosts[i].dyn.direction_y * ghosts[i].dyn.v / FPS; // Move
-			
-// 			if (ghosts[i].dyn.y < ghosts[i].size) // Faz o túnel, une as bordas superior e inferior
-// 				ghosts[i].dyn.y = map->h - ghosts[i].size;
-// 			else if (ghosts[i].dyn.y + ghosts[i].size > map->h)
-// 				ghosts[i].dyn.y = ghosts[i].size;
-// 			if (!map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*ghosts[i].size)][(int)(ghosts[i].dyn.x)]){ // Se há colisão, faz tratamento
-// 				ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + ghosts[i].size;
-// 				// My code
-// 				printf("\nColisão para cima/baixo Identificada (AÇÃO):");
-
-// 				ghosts[i].dyn.direction_y = 0;
-// 				// Verifica se ambos (esquerda e direita) estão livres (x)
-// 				if(map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x+ghosts[i].size)] && map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x-ghosts[i].size)]){
-// 					printf("\n	Aleatorio direita/esquerda, %d, %d", map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x+ghosts[i].size)], map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x-ghosts[i].size)]);
-// 					if(random < 50){
-// 						ghosts[i].dyn.direction_x = 1;
-// 						ghosts[i].movement = 0; // 0 é direita
-// 					}
-// 					else {
-// 						ghosts[i].dyn.direction_x = -1;
-// 						ghosts[i].movement = 2; // 2 é esquerda
-// 					}
-// 				} else if(!map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x+ghosts[i].size)]){ // Verifica colisão para a direita
-// 					printf("\n	Colisão para a esquerda, direita livre");
-// 					ghosts[i].dyn.direction_x = -1;
-// 					ghosts[i].movement = 2; // 2 é esquerda
-// 				} else{
-// 					printf("\n	Colisão para a direita, esquerda livre");
-// 					ghosts[i].dyn.direction_x = 1;
-// 					ghosts[i].movement = 0; // 0 é direita
-// 				}
-// 				ghosts[i].perp_moved = false; // Permite se mover perpendicularmente após a colisão
-// 				ghosts[i].colide_priority = true;
-// 				// change_direction(&ghosts[i]); // Muda de direção ao bater
-			
-// 			// CASO NÃO HAJA COLISÃO (VERIFICA LADOS PERPENDICULARES)
-// 			} else if(!ghosts[i].perp_moved && !ghosts[i].colide_priority){
-// 				printf("\nSem colisão (AÇÃO)");
-// 				// Verifica se ambos (esquerda e direita) estão livres (x)
-// 				if(map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x+ghosts[i].size)] && map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x-ghosts[i].size)]){
-// 					printf("\n	Aleatorio direita/esquerda, %d, %d", map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x+ghosts[i].size)], map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x-ghosts[i].size)]);
-// 					if(90 < random && random < 95){	
-// 						ghosts[i].dyn.direction_x = 1;
-// 						ghosts[i].movement = 0; // 0 é direita
-// 					}
-// 					else if(90 <= random < 100) {
-// 						ghosts[i].dyn.direction_x = -1;
-// 						ghosts[i].movement = 2; // 2 é esquerda
-// 					}
-// 				} else if(map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x+ghosts[i].size)]){ // Verifica caminho livre à direita
-// 					printf("\n	Direita");
-// 					if(random > 90){
-// 						ghosts[i].dyn.direction_x = 1;
-// 						ghosts[i].movement = 0; // 0 é direita
-// 					}
-// 				} else if(map->m[(int)ghosts[i].dyn.y][(int)(ghosts[i].dyn.x-ghosts[i].size)]){ // Verifica caminho livre à esquerda
-// 					printf("\n	Esquerda");
-// 					if(random > 90){
-// 						ghosts[i].dyn.direction_x = -1;
-// 						ghosts[i].movement = 2; // 2 é esquerda
-// 					}
-// 				}
-// 				if(ghosts[i].dyn.direction_x != 0){
-// 					printf("\n	Perp moved = true");
-// 					ghosts[i].dyn.direction_y = 0;
-// 					ghosts[i].perp_moved = true;
-// 				}
-// 			}
-// 			else if(ghosts[i].colide_priority){
-// 				ghosts[i].colide_priority = false;
-// 				printf("\n	colide priority = false");
-// 			}
-// 		}
-// 	}
-// }
 
 void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 	for (int i = 0; i < *ghosts_n; i++){
@@ -742,12 +544,7 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.x = map->w - ghosts[i].size;
 			else if (ghosts[i].dyn.x + ghosts[i].size > map->w)
 				ghosts[i].dyn.x = ghosts[i].size;
-<<<<<<< HEAD
 			if (!(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*ghosts[i].size)]%4)){ // Se parede,  volta e muda a direção
-=======
-			// TRATAMENTO DE COLISÕES
-			if (!map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*ghosts[i].size)]){
->>>>>>> origin/ariel_edit
 				ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + ghosts[i].size;
 				if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 5)
 					change_direction(&ghosts[i]);
@@ -764,12 +561,7 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.y = map->h - ghosts[i].size;
 			else if (ghosts[i].dyn.y + ghosts[i].size > map->h)
 				ghosts[i].dyn.y = ghosts[i].size;
-<<<<<<< HEAD
 			if (!(map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*ghosts[i].size)][(int)(ghosts[i].dyn.x)]%4)){ // Se parede, volta e muda a direção
-=======
-			// TRATAMENTO DE COLISÕES
-			if (!map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*ghosts[i].size)][(int)(ghosts[i].dyn.x)]){
->>>>>>> origin/ariel_edit
 				ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + ghosts[i].size;
 				if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 5)
 					change_direction(&ghosts[i]);
