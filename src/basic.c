@@ -126,13 +126,13 @@ void get_map (int map_id, Map *map) {
 	fclose(map_file);
 
 	// Debug
-	// for(int i = 0; i < map->h; i++){
-	// 	printf("[");
-	// 	for(int j = 0; j < map-> w; j++){
-	// 		printf("%d, ", map->m[i][j]);
-	// 	}
-	// 	printf("]\n");
-	// }
+	for(int i = 0; i < map->h; i++){
+		printf("[");
+		for(int j = 0; j < map-> w; j++){
+			printf("%d, ", map->m[i][j]);
+		}
+		printf("]\n");
+	}
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
@@ -162,7 +162,6 @@ void get_node_map(Map *map, NodeMap *nodemap){
 	nodemap->h = map->h;
 	nodemap->w = map-> w;
 
-	// Segmentation fault aqui !!!
 	for(int i = 0; i < map->h; i++){
 		for(int j = 0; j < map->w; j++){
 
@@ -214,19 +213,19 @@ void get_node_map(Map *map, NodeMap *nodemap){
 			}
 		}
 	}
-	// Debug
-	// printf("\n\n");
-	// for (int i = 0; i < nodemap->h; i++) {
-    //     printf("[", i);
-    //     for (int j = 0; j < nodemap->w; j++) {
-	// 		if(nodemap->m[i][j][0] || nodemap->m[i][j][1] || nodemap->m[i][j][2] || nodemap->m[i][j][3]){
-	// 			printf("Nó, ");
-	// 		} else{
-	// 			printf("  , ");
-	// 		}
-    //     }
-	// 	printf("]\n");
-    // }
+	//Debug
+	printf("\n\n");
+	for (int i = 0; i < nodemap->h; i++) {
+        printf("[", i);
+        for (int j = 0; j < nodemap->w; j++) {
+			if(nodemap->m[i][j][0] || nodemap->m[i][j][1] || nodemap->m[i][j][2] || nodemap->m[i][j][3]){
+				printf("Nó, ");
+			} else{
+				printf("  , ");
+			}
+        }
+		printf("]\n");
+    }
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
