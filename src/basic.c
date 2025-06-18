@@ -119,8 +119,14 @@ void get_map (int map_id, Map *map) {
 			case '4': // Door of the ghosts' beginning
 				map->m[i][j] = 4;
 				break;
-			case '5': // Empty Ghost large area move control
+			case '5': // Empty, but not a node
 				map->m[i][j] = 5;
+				break;
+			case '6': // Special case: node with all directions, except down
+				map->m[i][j] = 6;
+				break;
+			case '7': // Special case: node with only top
+				map->m[i][j] = 7;
 				break;
 			case '8':
 				map->m[i][j] = 8;
@@ -172,19 +178,19 @@ void get_node_map(Map *map, NodeMap *nodemap){
 			bool x_flag = false;
 			bool y_flag = false;
 
-			// Verifica se não é parede (parede é 0) e se não é posição de algoritmo de colisão (5)
-			if((map->m[i][j] % 5)){
+			// Verifica se não é parede (parede é 0), se não é posição de algoritmo de colisão (5), e se não é caso especial
+			if((map->m[i][j] % 5) && map->m[i][j] % 6 && map->m[i][j] % 7){
 				// Verifica se é nó, evitando acessar índice não existente
-				if(i+1 < nodemap->h){
+				if(i-1 >= 0){
 					// Verifica espaço livre (cima)
-					if(map->m[i+1][j]){
+					if(map->m[i-1][j]){
 						x_flag = true;
 						nodemap->m[i][j][0] = 1;
 					}
 				}
-				if(i-1 >= 0){
+				if(i+1 < nodemap->h){
 					// verifica espaço livre (baixo)
-					if(map->m[i-1][j]){
+					if(map->m[i+1][j]){
 						x_flag = true;
 						nodemap->m[i][j][1] = 1;
 					}
@@ -210,6 +216,11 @@ void get_node_map(Map *map, NodeMap *nodemap){
 						nodemap->m[i][j][k] = 0;
 					}
 				} 
+			} else if(map->m[i][j] == 6){
+				nodemap->m[i][j][0] = 1; 
+				nodemap->m[i][j][1] = 0; // Down desactivated (why it works???)
+				nodemap->m[i][j][2] = 1;
+				nodemap->m[i][j][3] = 1;
 			} else {
 				for(int k = 0; k < 4; k++){
 					nodemap->m[i][j][k] = 0;

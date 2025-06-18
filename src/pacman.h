@@ -109,11 +109,11 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 
 bool move_pacman (Map *map, Pacman *pacman, bool *win);
 
-void move_ghosts (Map *map,NodeMap *nodemap, Ghost *ghosts, int *ghosts_n);
+void move_ghosts (Map *map,NodeMap *nodemap, Ghost *ghosts, int *ghosts_n, Pacman *pacman);
 
 bool is_node(NodeMap *nodemap, int x, int y);
 
-void change_direction (Ghost *ghost);
+void change_direction (Ghost *ghost, Pacman *pacman, int pursuit_weight);
 
 double apply_vitamin (bool turn_on_effect, bool second_vitamin, Pacman *pacman, Ghost *ghosts, int *ghosts_n, Map *map, NodeMap *nodemap);
 

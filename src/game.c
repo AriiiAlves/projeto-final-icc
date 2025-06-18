@@ -118,7 +118,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 				if ((map->m[(int)(pacman.dyn.y+1)][(int)(pacman.dyn.x)] % 4)) {
 					pacman.dyn.direction_x = 0;
 					pacman.dyn.direction_y = 1;
-					pacman.movement = 3; // 3 é baixo
+					pacman.movement = 3; // 3 é cima
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT || ev->keyboard.keycode == ALLEGRO_KEY_D)
 				if ((map->m[(int)(pacman.dyn.y)][(int)(pacman.dyn.x+1)] % 4)) {
@@ -219,7 +219,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			}
 			if (win)
 				freeze(&pacman, ghosts, &ghosts_n);
-			move_ghosts(map, nodemap, ghosts, &ghosts_n); // Move fantasmas
+			move_ghosts(map, nodemap, ghosts, &ghosts_n, &pacman); // Move fantasmas
 
 			if (!lost_life)
 				lost_life = check_death(&pacman, ghosts, &ghosts_n);
@@ -270,7 +270,9 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 				al_draw_filled_circle(map->x_i+map->x_fac*(j+0.5), map->y_i+map->y_fac*(i+0.5), map->y_fac*map->pellet_rad, pellet);
 				break;
 			case 2: // Empty
-			case 5: // Empty (Ariel)
+			case 5: // Empty (go forward)
+			case 6: // Empty (special case)
+			case 7: // Empty (special case)
 				al_draw_filled_rectangle(map->x_i+map->x_fac*j, map->y_i+map->y_fac*i, map->x_i+map->x_fac*(j+1), map->y_i+map->y_fac*(i+1), empty);
 				break;
 			case 3: // Vitamin
@@ -461,9 +463,19 @@ bool move_pacman (Map *map, Pacman *pacman, bool *win) {
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
+// direction_y = 1 (baixo), direction_y = -1 (cima)
+// Movements -> 0 é direita, 1 é baixo, 2 é esquerda, 3 é cima
+
+void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n, Pacman *pacman) {
+	// Parâmetro de perseguição. Quanto maior mais difícil, mais movimentos em direção ao pac man (de 0 a 24)
+	int pursuit_weight = 24; 
+
+	// Se o parâmetro for fora do escopo, ignora
+	if(pursuit_weight > 24 || pursuit_weight < 0)
+		pursuit_weight = 0;
+
 	for (int i = 0; i < *ghosts_n; i++){
-		// Movimento inicial
+		// Movimento inicial aleatório (direção qualquer)
 		if (!ghosts[i].dyn.direction_x && !ghosts[i].dyn.direction_y) {
 			int random = rand() % 100; // Gera número entre 0 e 100
 
@@ -478,65 +490,94 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 			}
 		}
 
+		// Se for 7, apenas vai para cima (7 não é nó, apenas indicativo de direção)
+		if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 7){
+				ghosts[i].dyn.direction_y = -1;
+				ghosts[i].dyn.direction_x = 0;
+				ghosts[i].movement = 3; // 3 é cima
+		}
+
+		// Se o fantasma não está mais no último nó utilizado, reseta as coordenadas last_node
 		if (((int)ghosts[i].dyn.y != ghosts[i].last_node.x) || ((int)ghosts[i].dyn.x != ghosts[i].last_node.y)) {
 			ghosts[i].last_node.x = -1;
 			ghosts[i].last_node.y = -1;
 		}
 
-		// Define nova movimentação por nós (antes, verifica se é um nó e se esse nó não já originou uma decisão)
+		// Define movimentação por nós (antes, verifica se é um nó e se esse nó não já originou uma decisão)
 		if (is_node(nodemap, (int)ghosts[i].dyn.y, (int)ghosts[i].dyn.x) && (((int)ghosts[i].dyn.y != ghosts[i].last_node.x) || ((int)ghosts[i].dyn.x != ghosts[i].last_node.y))) {
 			bool flag = true;
-			// Preso em loop aqui
+
 			while (flag) {
-				// printf("\nLoop, node return: %d", is_node(nodemap, (int) ghosts[i].dyn.y, (int) ghosts[i].dyn.x));
-				// printf("\nnodemap[x][y]: %d, %d", (int)ghosts[i].dyn.y, (int)ghosts[i].dyn.x);
-				int random = rand() % 100; // Gera número entre 0 e 100
+				int random = rand() % 100;
 				int temp;
 
+				// // DEBUG
+				// printf("\n\nrandom: %d", random);
+				// printf("\nghost: [%d]", i);
+				// printf("\nnodemap[%d][%d] : [%d][%d][%d][%d]", (int)ghosts[i].dyn.y, (int)ghosts[i].dyn.x, nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][0], nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][1], nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][2], nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][3]);
+				// printf("\ndirection x: %d, direction y: %d", ghosts[i].dyn.direction_x, ghosts[i].dyn.direction_y);
 				// Maior chance de continuar na mesma direção, se possível
 				// Não volta ao contrário da direção atual
 				// 50 % de chance de virar na direção perpendicular
+
+				// Se movimentação atual é na horizontal
 				if (ghosts[i].dyn.direction_x) {
-					if (ghosts[i].dyn.direction_x > 0) {
-						temp = 2;
-					} else{
-						temp = 3;
-					}
+					// Verifica movimentação atual
+					if (ghosts[i].dyn.direction_x > 0)
+						temp = 2; // Direita
+					else
+						temp = 3; // Esquerda
+
+					// Peso de perseguição (ajusta probabilidades)
+					if(pacman->dyn.y > ghosts[i].dyn.y)
+						pursuit_weight *= -1; // Maior probabilidade de ir para baixo
+					else if(pacman->dyn.y == ghosts[i].dyn.y)
+						pursuit_weight = 0; // Sem ajuste
+
 					if (random < 50 && ghosts[i].dyn.direction_x && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][temp]) {
 						//printf("\nNó -> Continua\n");
 						flag = false;
-					} else if (random >= 50 && random < 75 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][0]) {
-						//printf("\nNó -> cima\n");
-						ghosts[i].dyn.direction_y = 1; 
+					} else if (random >= 50 && random < (75 + pursuit_weight) && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][0]) {
+						//printf("\nPac man para cima.\n");
+						ghosts[i].dyn.direction_y = -1; 
 						ghosts[i].dyn.direction_x = 0;
-						ghosts[i].movement = 1; // 1 é cima
+						ghosts[i].movement = 3; // 3 é cima
 						flag = false;
-					} else if(random >= 75 && random <= 100 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][1]) {
-						//printf("\nNó -> baixo\n");
-						ghosts[i].dyn.direction_y = -1;
+					} else if(random >= (75 + pursuit_weight) && random <= 100 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][1]) {
+						//printf("\nPac man para baixo.\n");
+						ghosts[i].dyn.direction_y = 1;
 						ghosts[i].dyn.direction_x = 0;
-						ghosts[i].movement = 3; // 3 é baixo
+						ghosts[i].movement = 1; // 1 é baixo
 						flag = false;
 					}
 				}
-				else if (ghosts[i].dyn.direction_y ){
-					if (ghosts[i].dyn.direction_y > 0) {
-						temp = 0;
+				// Se movimentação atual é na vertical
+				else if (ghosts[i].dyn.direction_y){
+					if (ghosts[i].dyn.direction_y < 0) {
+						temp = 0; // Cima
 					} else{
-						temp = 1;
+						temp = 1; // Baixo
 					}
-					if (random < 50 && ghosts[i].dyn.direction_y && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][temp]) {
-						//printf("\nNó -> baixo\n");
+
+					// Peso de perseguição (ajusta probabilidades)
+					if(pacman->dyn.x < ghosts[i].dyn.x)
+						pursuit_weight *= -1; // Maior probabilidade de ir para a esquerda
+					else if(pacman->dyn.x == ghosts[i].dyn.x)
+						pursuit_weight = 0; // Sem ajuste
+					
+					// Continua movimento atual
+					if (random < 50 && ghosts[i].dyn.direction_y && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][temp])
 						flag = false;
-					}
-					if (random >= 50 && random < 75 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][2]) {
-						//printf("\nNó -> Direita\n");
+					// Para a direita
+					if (random >= 50 && random < (75 + pursuit_weight) && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][2]) {
+						//printf("\nPac man para a direita.\n");
 						ghosts[i].dyn.direction_x = 1;
 						ghosts[i].dyn.direction_y = 0;
 						ghosts[i].movement = 0; // 0 é direita
 						flag = false;
-					} else if (random >= 75 && random < 100 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][3]) {
-						//printf("\nNó -> esquerda\n");
+					// Para a esquerda
+					} else if (random >= (75 + pursuit_weight) && random < 100 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][3]) {
+						//printf("\nPac man para a esquerda.\n");
 						ghosts[i].dyn.direction_x = -1;
 						ghosts[i].dyn.direction_y = 0;
 						ghosts[i].movement = 2; // 2 é esquerda
@@ -546,23 +587,14 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 			}
 			ghosts[i].last_node.x = (int) ghosts[i].dyn.y;
 			ghosts[i].last_node.y = (int) ghosts[i].dyn.x;
-			//printf("Last node. x: %d, y: %d", ghosts[i].last_node.x, ghosts[i].last_node.y);
 		}
 		// Se não for nó, apenas continua com o movimento
 
 		/*
-			Onde for 5 no mapa (ou outro número), o fantasma apenas segue reto (não considera como nó). Onde for 1, o algoritmo pode classificar como nó.
-			E também ativa somente o algoritmo de colisão.
+			Onde for 5 ou 7 no mapa, o fantasma apenas segue reto (não considera como nó) E permite somente o algoritmo de colisão.. Onde for 1/2/3, o algoritmo pode classificar como nó.
+			Onde for 7, especifica-se ir para cima.
 
-			Ter nós um do lado do outro não funciona bem.
-
-			Exemplo com parte inicial dos fantasmas
-
-			0 0 2 0 2 0 0
-			0 5 2 5 2 5 0
-			0 5 5 5 5 5 0
-			0 5 5 5 5 5 0
-			0 0 0 0 0 0 0
+			Ter nós um do lado do outro não funciona bem. Use 5 para regiões adjascentes ao nó pretendido (quadrado onde é possível mudar a direção de acordo com os blocos disponíveis adjascentes)
 		*/
 
 		// PRETENSÃO DE MOVIMENTO EM X
@@ -577,9 +609,9 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.x = ghosts[i].size;
 			if (!(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x+ghosts[i].dyn.direction_x*ghosts[i].size)]%4)){ // Se parede,  volta e muda a direção
 				ghosts[i].dyn.x = (int)(ghosts[i].dyn.x) + ghosts[i].size;
-				if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 5)
-					change_direction(&ghosts[i]);
-				//printf("\nColisão");
+				// Se é 5 ou 7, ativa algoritmo de colisão se necessário
+				if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 5 || map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 7)
+					change_direction(&ghosts[i], pacman, pursuit_weight);
 			}
 				
 		// PRETENSÃO DE MOVIMENTO EM Y
@@ -594,9 +626,9 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 				ghosts[i].dyn.y = ghosts[i].size;
 			if (!(map->m[(int)(ghosts[i].dyn.y+ghosts[i].dyn.direction_y*ghosts[i].size)][(int)(ghosts[i].dyn.x)]%4)){ // Se parede, volta e muda a direção
 				ghosts[i].dyn.y = (int)(ghosts[i].dyn.y) + ghosts[i].size;
-				if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 5)
-					change_direction(&ghosts[i]);
-				//printf("\nColisão");
+				// Se é 5 ou 7, ativa algoritmo de colisão se necessário
+				if(map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 5 || map->m[(int)(ghosts[i].dyn.y)][(int)(ghosts[i].dyn.x)] == 7)
+					change_direction(&ghosts[i], pacman, pursuit_weight);
 			}
 		}
 	}
@@ -604,6 +636,7 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
+// Verifica se x,y é um nó
 bool is_node (NodeMap *nodemap, int x, int y) {
 	for (int i = 0; i < 4; i++)
 		if (nodemap->m[x][y][i] != 0)
@@ -614,24 +647,36 @@ bool is_node (NodeMap *nodemap, int x, int y) {
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
 // Inteligência de movimento do fantasma
-void change_direction (Ghost *ghost) {
+void change_direction (Ghost *ghost, Pacman *pacman, int pursuit_weight) {
 	int random = rand() % 100; // Gera número entre 0 e 100
 
 	if (ghost->dyn.direction_x) {
 		ghost->dyn.direction_x = 0; // Reseta movimento
 
-		if (random < 50) {
-			ghost->dyn.direction_y = 1;
-			ghost->movement = 1; // 1 é cima
-		} else {
+		// Ajuste de pesos de perseguição
+		if(pacman->dyn.y > ghost->dyn.y)
+			pursuit_weight *= -1; // Maior probabilidade de ir para baixo
+		else if(pacman->dyn.y == ghost->dyn.y)
+			pursuit_weight = 0; // Sem ajuste
+		
+		if (random < 50 + pursuit_weight*2) {
 			ghost->dyn.direction_y = -1;
-			ghost->movement = 3; // 3 é baixo
+			ghost->movement = 3; // 3 é cima
+		} else {
+			ghost->dyn.direction_y = 1;
+			ghost->movement = 1; // 1 é baixo
 		}
 	}
 	else if (ghost->dyn.direction_y) {
 		ghost->dyn.direction_y = 0; // Reseta movimento
 
-		if (random < 50) {
+		// Ajuste de pesos de perseguição
+		if(pacman->dyn.x < ghost->dyn.x)
+			pursuit_weight *= -1; // Maior probabilidade de ir para a esquerda
+		else if(pacman->dyn.x == ghost->dyn.x)
+			pursuit_weight = 0; // Sem ajuste
+
+		if (random < 50 + pursuit_weight*2) {
 			ghost->dyn.direction_x = 1;
 			ghost->movement = 0; // 0 é direita
 		} else {
