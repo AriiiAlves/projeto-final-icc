@@ -15,6 +15,7 @@
 #define PACMAN_SPRITE_COLS 9               // Número de colunas na spritesheet
 #define PACMAN_SPRITE_ROWS 4               // Número de linhas na spritesheet (diferentes movimentos)
 #define GHOST_SPRITE_COLS 1                // Número de colunas na spritesheet
+#define GHOST_VULNERABLE_SPRITE_COLS 2     // Número de colunas na spritesheet
 #define GHOST_SPRITE_ROWS 4                // Número de linhas na spritesheet (diferentes movimentos)
 #define PACMAN_V_0 5                       // Velocidade padrão do pacman
 #define GHOSTS_V_0 5.5                     // Velocidade padrão dos fantasmas
@@ -40,21 +41,21 @@ struct Map {
 	int pellet_n;                     // Conta as pellets restantes
 };
 
-// Informações dinâmicas (movimento) comuns ao Pacman e os fantasmas
+// Informações dinâmicas (movimento) comuns ao Pacman e aos fantasmas
 typedef struct Dynamics Dynamics;
 struct Dynamics {
-	double start_x, start_y;        // Posição inicial da entidade. Retorna para tal, no caso de morte
-	double x, y;                    // Posição atual
-	double v;                       // Módulo da velocidade
-	int direction_x, direction_y;   // Versor da direção. Ambos só podem receber +/-1, mas nunca ao mesmo tempo, de forma a formar as 4 direções
+	double start_x, start_y, start_v;        // Posição inicial da entidade. Retorna para tal, no caso de morte
+	double x, y;                             // Posição atual
+	double v;                                // Módulo da velocidade
+	int direction_x, direction_y;            // Versor da direção. Ambos só podem receber +/-1, mas nunca ao mesmo tempo, de forma a formar as 4 direções
 };
 
 // Pacman
 typedef struct Pacman Pacman;
 struct Pacman {
 	Dynamics dyn;              // Informações relacionadas ao movimento
-	int points;                // Pontos
 	double size;               // Tamanho "radial" do Pacman em relação ao mapa. Geralmente usado para colisões e desenhá-lo
+	int points;                // Pontos
 	bool vitamin;              // True = efeito da vitamina ativado
 	int lives;                 // Número de vidas
 	int movement;              // Id do movimento, o qual corresponde à linha da spite sheet que deve ser utilizada
@@ -71,21 +72,21 @@ struct NodeCoord{
 // Fantasma
 typedef struct Ghost Ghost;
 struct Ghost {
-	Dynamics dyn;              // Informações relacionadas ao movimento
-	double size;               // Tamanho "radial" do Pacman em relação ao mapa. Geralmente usado para colisões e desenhá-lo
-	bool vulnerable;           // Indica que o Pacman comeu a vitamina e ele pode ser comido
-	int movement;              // Id do movimento, o qual corresponde à linha da spite sheet que deve ser utilizada
-	int frame;                 // Id da coluna da sprite sheet que deve ser utilizada
-
-	NodeCoord last_node;
-	ALLEGRO_BITMAP *sprite;    // Sprite sheet
+	Dynamics dyn;                        // Informações relacionadas ao movimento
+	double size;                         // Tamanho "radial" do Pacman em relação ao mapa. Geralmente usado para colisões e desenhá-lo
+	bool vulnerable;                     // Indica que o Pacman comeu a vitamina e ele pode ser comido
+	int movement;                        // Id do movimento, o qual corresponde à linha da spite sheet que deve ser utilizada
+	int frame;                           // Id da coluna da sprite sheet que deve ser utilizada
+	NodeCoord last_node;                 // Guarda última curva que fez; essencialmente, impede o fantasma de voltar a todo momento
+	ALLEGRO_BITMAP *sprite;              // Sprite sheet --> vulnerável (aka vitamina)
+	ALLEGRO_BITMAP *sprite_vulnerable;   // Sprite sheet
 };
 
-// Testing (Ariel)
+// Ariel --> Matriz paralela ao mapa que contém posições em que curvas são possíveis; descreve o movimento possível
 typedef struct NodeMap NodeMap;
 struct NodeMap {
-	int ***m; // Matriz 2x2 que contém vetores 1x4
-	int w, h;
+	int ***m;      // Matriz bidimensional que contém vetores de 4 elementos (WASD)
+	int w, h;      // Dimensões da matriz (= dimensões do mapa)
 };
 
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
@@ -104,21 +105,21 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
 
-void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height);
+void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height, bool *lost_life, bool *win);
 
 bool move_pacman (Map *map, Pacman *pacman, bool *win);
 
 void move_ghosts (Map *map,NodeMap *nodemap, Ghost *ghosts, int *ghosts_n);
 
-int isnode(NodeMap *nodemap, int x, int y);
+bool is_node(NodeMap *nodemap, int x, int y);
 
 void change_direction (Ghost *ghost);
 
-double apply_vitamin (bool turn_on_effect, Pacman *pacman, Ghost *ghosts, int *ghosts_n, Map *map, NodeMap *nodemap);
+double apply_vitamin (bool turn_on_effect, bool second_vitamin, Pacman *pacman, Ghost *ghosts, int *ghosts_n, Map *map, NodeMap *nodemap);
 
-void verify_defeat (Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active);
+bool check_death (Pacman *pacman, Ghost *ghosts, int *ghosts_n);
 
-void winners_message (Pacman *pacman, Ghost *ghosts, int *ghosts_n);
+void freeze (Pacman *pacman, Ghost *ghosts, int *ghosts_n);
 
 void get_map (int map_id, Map *map);
 

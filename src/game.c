@@ -1,5 +1,13 @@
 #include"pacman.h"
 
+/*
+ * Quando arescentar o sprite vulnerável,
+ * basta:
+ * - Apagar linhas 329 e 358
+ * - Descomentar linhas 330 e 359
+ * - Apagar este próprio comentário
+ */
+
 // Loop principal do jogo
 int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id) {
 	// Inicializa entidades
@@ -44,7 +52,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 	bool redraw = false;
 	int select = -1;
 	bool game_running = true; // Indica se continua rodando o jogo
-	int defeat_active = 0; // Indica se há derrota para se relacionar com a tecla enter
+	bool lost_life = false; // Indica que o jogador perdeu uma vida e interrompe o jogo (espera por enter)
 	bool win = false;
 	double vitamin_time = -0.1;
 	bool *g1 = calloc(g, sizeof(bool));
@@ -143,30 +151,43 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			}
 			// Após colidir com um fantasma
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ENTER) {
-				if (defeat_active && pacman.lives >= 1) {
-					// Desativa indicador de derrota
-					defeat_active = 0;
-					vitamin_time = apply_vitamin(false, &pacman, ghosts, &ghosts_n, map, nodemap);
-					// Retorna pacman e fantasmas à posição inicial
+				if (lost_life) {
+					if (pacman.lives >= 1) {
+						// Desativa indicador de derrota
+						lost_life = false;
+						vitamin_time = apply_vitamin(false, false, &pacman, ghosts, &ghosts_n, map, nodemap);
+						// Retorna pacman e fantasmas à posição inicial e velocidades iniciais
+						pacman.dyn.x = pacman.dyn.start_x;
+						pacman.dyn.y = pacman.dyn.start_y;
+						pacman.dyn.v = pacman.dyn.start_v;
+						for (int i = 0; i < ghosts_n; i++) {
+							ghosts[i].dyn.x = ghosts[i].dyn.start_x;
+							ghosts[i].dyn.y = ghosts[i].dyn.start_y;
+							ghosts[i].dyn.v = ghosts[i].dyn.start_v;
+						}
+					} else
+						game_running = false; // Interrompe loop do jogo e volta ao menu principal
+				}
+
+				if (win) {
+					win = false;
 					pacman.dyn.x = pacman.dyn.start_x;
 					pacman.dyn.y = pacman.dyn.start_y;
+					pacman.dyn.v = pacman.dyn.start_v;
+					pacman.dyn.direction_x = 0;
+					pacman.dyn.direction_y = 0;
+					pacman.vitamin = false;
 					for (int i = 0; i < ghosts_n; i++) {
 						ghosts[i].dyn.x = ghosts[i].dyn.start_x;
 						ghosts[i].dyn.y = ghosts[i].dyn.start_y;
+						ghosts[i].dyn.v = ++ghosts[i].dyn.start_v;
+						ghosts[i].dyn.direction_x = 0;
+						ghosts[i].dyn.direction_y = 0;
+						ghosts[i].vulnerable = false;
 					}
-
-					// Devolve velocidades
-					pacman.dyn.v = PACMAN_V_0;
-					for (int i = 0; i < ghosts_n; i++){
-						ghosts[i].dyn.v = GHOSTS_V_0;
-					}
-				}
-				else if (defeat_active) {
-					// Volta ao menu principal
-					defeat_active = 0; 
-					// Interrompe loop do jogo
-					game_running = false;
-					// Desativa indicador de derrota
+					int map_id = map->id;
+					free_map(map);
+					get_map(map_id, map);
 				}
 			}
 			break;
@@ -176,8 +197,11 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			// Muda os sprites
 			if (*sprite_timer >= *sprite_delay) {
 				pacman.frame = (pacman.frame + 1) % PACMAN_SPRITE_COLS; // Avança para o próximo frame (Pac man)
-				for (int i = 0; i < ghosts_n; i++){
-					ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
+				for (int i = 0; i < ghosts_n; i++) {
+					if (ghosts[i].vulnerable)
+						ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_VULNERABLE_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
+					else
+						ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
 				}
 			*sprite_timer = 0.0;
 			}
@@ -185,16 +209,20 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			if (vitamin_time > 0.0) {
 				vitamin_time -= 1.0 / FPS;
 				if (vitamin_time <= 0.0)
-					vitamin_time = apply_vitamin(false, &pacman, ghosts, &ghosts_n, map, nodemap);
+					vitamin_time = apply_vitamin(false, false, &pacman, ghosts, &ghosts_n, map, nodemap);
 			}
 			// Movimento e detecção da vitamina
-			if (move_pacman(map, &pacman, &win))
-				vitamin_time = apply_vitamin(true, &pacman, ghosts, &ghosts_n, map, nodemap);
+			if (move_pacman(map, &pacman, &win)) {
+				if (vitamin_time > 0)
+					vitamin_time = apply_vitamin(false, true, &pacman, ghosts, &ghosts_n, map, nodemap);
+				vitamin_time = apply_vitamin(true, false, &pacman, ghosts, &ghosts_n, map, nodemap);
+			}
 			if (win)
-				winners_message(&pacman, ghosts, &ghosts_n);
+				freeze(&pacman, ghosts, &ghosts_n);
 			move_ghosts(map, nodemap, ghosts, &ghosts_n); // Move fantasmas
 
-			verify_defeat(&pacman, ghosts, &ghosts_n, &defeat_active);
+			if (!lost_life)
+				lost_life = check_death(&pacman, ghosts, &ghosts_n);
 
 			// Indica que a tela deve ser atualizada
 			redraw = true;
@@ -202,7 +230,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 		}
 		// Atualiza a tela
 		if (redraw && al_is_event_queue_empty(*queue)) {
-			game_show(map, &font, b, &b_n, &select, &pacman, ghosts, &ghosts_n, &width, &height);
+			game_show(map, &font, b, &b_n, &select, &pacman, ghosts, &ghosts_n, &width, &height, &lost_life, &win);
 			redraw = false;
 		}
 	}
@@ -219,7 +247,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
 // Design (by Ariel)
-void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height) {
+void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height, bool *lost_life, bool *win) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 	// Cores referentes ao mapa
 	ALLEGRO_COLOR wall = al_map_rgb(0, 10, 100),
@@ -260,7 +288,10 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 	// Desenhando Pac Man e fantasmas na tela
 	al_draw_scaled_bitmap(pacman->sprite, pacman->frame * SPRITE_SIZE, pacman->movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(pacman->dyn.x-pacman->size), map->y_i+map->y_fac*(pacman->dyn.y-pacman->size), map->x_fac*(2*pacman->size), map->y_fac*(2*pacman->size), 0);
 	for (int i = 0; i < *ghosts_n; i++)
-		al_draw_scaled_bitmap(ghosts[i].sprite, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-ghosts[i].size), map->y_i+map->y_fac*(ghosts[i].dyn.y-ghosts[i].size), map->x_fac*(2*ghosts[i].size), map->y_fac*(2*ghosts[i].size), 0);
+		if (ghosts[i].vulnerable)
+			al_draw_scaled_bitmap(ghosts[i].sprite_vulnerable, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-ghosts[i].size), map->y_i+map->y_fac*(ghosts[i].dyn.y-ghosts[i].size), map->x_fac*(2*ghosts[i].size), map->y_fac*(2*ghosts[i].size), 0);
+		else
+			al_draw_scaled_bitmap(ghosts[i].sprite, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-ghosts[i].size), map->y_i+map->y_fac*(ghosts[i].dyn.y-ghosts[i].size), map->x_fac*(2*ghosts[i].size), map->y_fac*(2*ghosts[i].size), 0);
 
 	char show_points[50]; // Espaço para armazenar o texto formatado
 	char show_lives[10];
@@ -269,6 +300,11 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 
 	al_draw_text(*font, al_map_rgb(255, 255, 255), map->x_i, map->y_i - 50, ALLEGRO_ALIGN_LEFT, show_points);
 	al_draw_text(*font, al_map_rgb(255, 255, 255), map->x_f, map->y_i - 50, ALLEGRO_ALIGN_RIGHT, show_lives);
+
+	if (*lost_life)
+		al_draw_text(*font, al_map_rgb(255, 255, 255), *width/2, *height/2, ALLEGRO_ALIGN_CENTER, "Oops. Press enter to continue.");
+	if (*win)
+		al_draw_text(*font, al_map_rgb(255, 255, 255), *width/2, *height/2, ALLEGRO_ALIGN_CENTER, "Nicely done!! Press enter to continue.");
 	al_flip_display();
 }
 
@@ -281,7 +317,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 	switch (map->id) {
 	default:
 		// Pacman
-		*pacman = (Pacman){(Dynamics){0.0, 0.0, 0.0, 0.0, PACMAN_V_0, 0, 0}, 0, 0.51, false, 3, 0, 0, NULL};
+		*pacman = (Pacman){(Dynamics){0.0, 0.0, PACMAN_V_0, 0.0, 0.0, PACMAN_V_0, 0, 0}, 0.51, 0, false, 3, 0, 0, NULL};
 		pacman->sprite = al_load_bitmap("../../sprites/Pac_Man.png");
 		pacman->dyn.start_x = map->w/2.0;
 		pacman->dyn.start_y = 24.5;
@@ -292,8 +328,10 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 		*ghosts_n = 4; // Número de fantasmas
 		ghosts = malloc(*ghosts_n * sizeof(Ghost));
 		for (int i = 0; i < *ghosts_n; i++) {
-			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord) {0, 0}, NULL};
+			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, GHOSTS_V_0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord){0, 0}, NULL, NULL};
 			ghosts[i].sprite = al_load_bitmap(ghosts_path[i%4]);
+			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Pac_Man.png");
+//			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Ghost_Vulnerable.png");
 		}
 		// Centraliza os fantasmas
 		for (int i = 0; i < *ghosts_n; i++) {
@@ -308,7 +346,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 		break;
 	case 1:
 		// Pacman
-		*pacman = (Pacman){(Dynamics){0.0, 0.0, 0.0, 0.0, PACMAN_V_0, 0, 0}, 0, 0.51, false, 3, 0, 0, NULL};
+		*pacman = (Pacman){(Dynamics){0.0, 0.0, PACMAN_V_0, 0.0, 0.0, PACMAN_V_0, 0, 0}, 0.51, 0, false, 3, 0, 0, NULL};
 		pacman->sprite = al_load_bitmap("../../sprites/Pac_Man.png");
 		pacman->dyn.start_x = 0.5;
 		pacman->dyn.start_y = 0.5;
@@ -319,8 +357,10 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 		*ghosts_n = 30; // Número de fantasmas
 		ghosts = malloc(*ghosts_n * sizeof(Ghost));
 		for (int i = 0; i < *ghosts_n; i++) {
-			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord){0, 0}, NULL};
+			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, GHOSTS_V_0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord){0, 0}, NULL, NULL};
 			ghosts[i].sprite = al_load_bitmap(ghosts_path[i%4]);
+			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Pac_Man.png");
+//			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Ghost_Vulnerable.png");
 		}
 		// Inicializa a posição dos fantasmas
 		{
@@ -405,6 +445,8 @@ bool move_pacman (Map *map, Pacman *pacman, bool *win) {
 			map->m[(int)(pacman->dyn.y+pacman->dyn.direction_y*(pacman->size+map->pellet_rad-0.5))][(int)(pacman->dyn.x)] = 2;
 			map->pellet_n--;
 			pacman->points += 10;
+			if (!map->pellet_n)
+				*win = true;
 		}
 		// Come as vitaminas e retorna avisando que comeu
 		if (next_square == 3 && map->m[(int)(pacman->dyn.y+pacman->dyn.direction_y*(pacman->size+map->vitamin_rad-0.5))][(int)(pacman->dyn.x)] == 3) {
@@ -422,7 +464,7 @@ bool move_pacman (Map *map, Pacman *pacman, bool *win) {
 void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 	for (int i = 0; i < *ghosts_n; i++){
 		// Movimento inicial
-		if (!ghosts[i].dyn.direction_x && !ghosts[i].dyn.direction_y){
+		if (!ghosts[i].dyn.direction_x && !ghosts[i].dyn.direction_y) {
 			int random = rand() % 100; // Gera número entre 0 e 100
 
 			if (random < 25){
@@ -436,17 +478,17 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 			}
 		}
 
-		if(((int) ghosts[i].dyn.y != ghosts[i].last_node.x) || ((int) ghosts[i].dyn.x != ghosts[i].last_node.y)){
+		if (((int)ghosts[i].dyn.y != ghosts[i].last_node.x) || ((int)ghosts[i].dyn.x != ghosts[i].last_node.y)) {
 			ghosts[i].last_node.x = -1;
 			ghosts[i].last_node.y = -1;
 		}
 
 		// Define nova movimentação por nós (antes, verifica se é um nó e se esse nó não já originou uma decisão)
-		if(isnode(nodemap, (int) ghosts[i].dyn.y, (int) ghosts[i].dyn.x) && (((int) ghosts[i].dyn.y != ghosts[i].last_node.x) || ((int) ghosts[i].dyn.x != ghosts[i].last_node.y))){
+		if (is_node(nodemap, (int)ghosts[i].dyn.y, (int)ghosts[i].dyn.x) && (((int)ghosts[i].dyn.y != ghosts[i].last_node.x) || ((int)ghosts[i].dyn.x != ghosts[i].last_node.y))) {
 			bool flag = true;
 			// Preso em loop aqui
-			while(flag){
-				// printf("\nLoop, node return: %d", isnode(nodemap, (int) ghosts[i].dyn.y, (int) ghosts[i].dyn.x));
+			while (flag) {
+				// printf("\nLoop, node return: %d", is_node(nodemap, (int) ghosts[i].dyn.y, (int) ghosts[i].dyn.x));
 				// printf("\nnodemap[x][y]: %d, %d", (int)ghosts[i].dyn.y, (int)ghosts[i].dyn.x);
 				int random = rand() % 100; // Gera número entre 0 e 100
 				int temp;
@@ -454,13 +496,13 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 				// Maior chance de continuar na mesma direção, se possível
 				// Não volta ao contrário da direção atual
 				// 50 % de chance de virar na direção perpendicular
-				if(ghosts[i].dyn.direction_x){
-					if(ghosts[i].dyn.direction_x > 0){
+				if (ghosts[i].dyn.direction_x) {
+					if (ghosts[i].dyn.direction_x > 0) {
 						temp = 2;
 					} else{
 						temp = 3;
 					}
-					if (random < 50 && ghosts[i].dyn.direction_x && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][temp]){
+					if (random < 50 && ghosts[i].dyn.direction_x && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][temp]) {
 						//printf("\nNó -> Continua\n");
 						flag = false;
 					} else if (random >= 50 && random < 75 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][0]) {
@@ -477,8 +519,8 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 						flag = false;
 					}
 				}
-				else if (ghosts[i].dyn.direction_y){
-					if(ghosts[i].dyn.direction_y > 0){
+				else if (ghosts[i].dyn.direction_y ){
+					if (ghosts[i].dyn.direction_y > 0) {
 						temp = 0;
 					} else{
 						temp = 1;
@@ -487,7 +529,7 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 						//printf("\nNó -> baixo\n");
 						flag = false;
 					}
-					if (random >= 50 && random < 75 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][2]){
+					if (random >= 50 && random < 75 && nodemap->m[(int)ghosts[i].dyn.y][(int)ghosts[i].dyn.x][2]) {
 						//printf("\nNó -> Direita\n");
 						ghosts[i].dyn.direction_x = 1;
 						ghosts[i].dyn.direction_y = 0;
@@ -562,14 +604,11 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n) {
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-int isnode(NodeMap *nodemap, int x, int y){
-	for(int i = 0; i < 4; i++){
-		if(nodemap->m[x][y][i] != 0){
-			//printf("\n[%d] -> diferente de zero", i);
-			return 1;
-		}
-	}
-	return 0;
+bool is_node (NodeMap *nodemap, int x, int y) {
+	for (int i = 0; i < 4; i++)
+		if (nodemap->m[x][y][i] != 0)
+			return true;
+	return false;
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
@@ -578,10 +617,10 @@ int isnode(NodeMap *nodemap, int x, int y){
 void change_direction (Ghost *ghost) {
 	int random = rand() % 100; // Gera número entre 0 e 100
 
-	if(ghost->dyn.direction_x){
+	if (ghost->dyn.direction_x) {
 		ghost->dyn.direction_x = 0; // Reseta movimento
 
-		if(random < 50){
+		if (random < 50) {
 			ghost->dyn.direction_y = 1;
 			ghost->movement = 1; // 1 é cima
 		} else {
@@ -589,10 +628,10 @@ void change_direction (Ghost *ghost) {
 			ghost->movement = 3; // 3 é baixo
 		}
 	}
-	else if(ghost->dyn.direction_y){
+	else if (ghost->dyn.direction_y) {
 		ghost->dyn.direction_y = 0; // Reseta movimento
 
-		if(random < 50){
+		if (random < 50) {
 			ghost->dyn.direction_x = 1;
 			ghost->movement = 0; // 0 é direita
 		} else {
@@ -604,24 +643,20 @@ void change_direction (Ghost *ghost) {
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-double apply_vitamin (bool turn_on_effect, Pacman *pacman, Ghost *ghosts, int *ghosts_n, Map *map, NodeMap *nodemap) {
+double apply_vitamin (bool turn_on_effect, bool second_vitamin, Pacman *pacman, Ghost *ghosts, int *ghosts_n, Map *map, NodeMap *nodemap) {
 	double time;
 	if (turn_on_effect) {
+		pacman->dyn.v *= 1.5;
+		for (int i = 0; i < *ghosts_n; i++) {
+			ghosts[i].vulnerable = true;
+			ghosts[i].dyn.v *= 0.6;
+		}
+
 		switch (map->id) {
 		default:
-			pacman->dyn.v *= 1.5;
-			for (int i = 0; i < *ghosts_n; i++) {
-				ghosts[i].vulnerable = true;
-				ghosts[i].dyn.v *= 0.6;
-			}
 			time = 10.0;
 			break;
 		case 1:
-			pacman->dyn.v *= 1.5;
-			for (int i = 0; i < *ghosts_n; i++) {
-				ghosts[i].vulnerable = true;
-				ghosts[i].dyn.v *= 0.6;
-			}
 			for (int i = 0; i < map->h; i++)
 				for (int j = 0; j < map->w; j++)
 					if (map->m[i][j] == 8)
@@ -632,24 +667,21 @@ double apply_vitamin (bool turn_on_effect, Pacman *pacman, Ghost *ghosts, int *g
 			break;
 		}
 	} else {
-		switch (map->id) {
-		default:
-			pacman->vitamin = false;
-			pacman->dyn.v = PACMAN_V_0;
-			for (int i = 0; i < *ghosts_n; i++) {
-				ghosts[i].vulnerable = false;
-				ghosts[i].dyn.v = GHOSTS_V_0;
-			}
-			time = -0.1;
-			break;
-		case 1:
-			pacman->vitamin = false;
-			pacman->dyn.v = PACMAN_V_0;
-			pacman->dyn.x = pacman->dyn.start_x;
-			pacman->dyn.y = pacman->dyn.start_y;
-			for (int i = 0; i < *ghosts_n; i++) {
-				ghosts[i].vulnerable = false;
-				ghosts[i].dyn.v = GHOSTS_V_0;
+		pacman->vitamin = false;
+		pacman->dyn.v = pacman->dyn.start_v;
+		for (int i = 0; i < *ghosts_n; i++) {
+			ghosts[i].vulnerable = false;
+			ghosts[i].dyn.v = ghosts[i].dyn.start_v;
+		}
+		time = -0.1;
+
+		// Mapa de id 1 precisa de detalhes extras
+		if (map->id == 1) {
+			// Se for a segunda ou mais vitamina em seguida, não restaura a posição
+			// Se o tempo acabou mesmo, restaura a posição inicial (para evitar ficar preso)
+			if (!second_vitamin) {
+				pacman->dyn.x = pacman->dyn.start_x;
+				pacman->dyn.y = pacman->dyn.start_y;
 			}
 			for (int i = 0; i < map->h; i++)
 				for (int j = 0; j < map->w; j++)
@@ -657,8 +689,6 @@ double apply_vitamin (bool turn_on_effect, Pacman *pacman, Ghost *ghosts, int *g
 						map->m[i][j] = 8;
 			free_node_map(nodemap);
 			get_node_map(map, nodemap);
-			time = -0.1;
-			break;
 		}
 	}
 	return time;
@@ -666,35 +696,32 @@ double apply_vitamin (bool turn_on_effect, Pacman *pacman, Ghost *ghosts, int *g
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-// Verifica se há colisão. Se há, para todos os personagens e o jogador tem que apertar enter para iniciar de novo com outra vida.
-void verify_defeat (Pacman *pacman, Ghost *ghosts, int *ghosts_n, int *defeat_active) {
-	// Verifica se o jogador perdeu
-	for(int i = 0; i < *ghosts_n; i++) {
-		if((int)pacman->dyn.x == (int)ghosts[i].dyn.x  && (int)pacman->dyn.y == (int)ghosts[i].dyn.y && !*defeat_active) {
+// Verifica se há colisão. Se há, congela todos os personagens e o jogador tem que apertar enter para iniciar de novo com outra vida.
+bool check_death (Pacman *pacman, Ghost *ghosts, int *ghosts_n) {
+	// Verifica se o jogador trombou com algum fantasma
+	for (int i = 0; i < *ghosts_n; i++)
+		if ((int)pacman->dyn.x == (int)ghosts[i].dyn.x && (int)pacman->dyn.y == (int)ghosts[i].dyn.y) {
 			if (ghosts[i].vulnerable) {
 				pacman->points += 200;
 				ghosts[i].vulnerable = false;
 				ghosts[i].dyn.x = ghosts[i].dyn.start_x;
 				ghosts[i].dyn.y = ghosts[i].dyn.start_y;
-				ghosts[i].dyn.v = GHOSTS_V_0;
+				ghosts[i].dyn.v = ghosts[i].dyn.start_v;
 			} else {
 				// Pausa personagens
-				pacman->dyn.v = 0;
-				for(int i = 0; i < *ghosts_n; i++)
-					ghosts[i].dyn.v = 0;
+				freeze(pacman, ghosts, ghosts_n);
 				// Perde vida
-				pacman->lives -= 1;
-				// Derrota ativa
-				*defeat_active = 1;
+				pacman->lives--;
+				// Avisa que perdeu vida
+				return true;
 			}
-//			printf("\nDerrota\n");
 		}
-	}
+	return false;
 }
 
 /*-------------------------------------------------------------------------------------------------------------------------*/
 
-void winners_message (Pacman *pacman, Ghost *ghosts, int *ghosts_n) {
+void freeze (Pacman *pacman, Ghost *ghosts, int *ghosts_n) {
 	for (int i = 0; i < *ghosts_n; i++)
 		ghosts[i].dyn.v = 0;
 	pacman->dyn.v = 0;
