@@ -198,7 +198,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			if (*sprite_timer >= *sprite_delay) {
 				pacman.frame = (pacman.frame + 1) % PACMAN_SPRITE_COLS; // Avança para o próximo frame (Pac man)
 				for (int i = 0; i < ghosts_n; i++) {
-					if (ghosts[i].vulnerable)
+					if (ghosts[i].vulnerable && vitamin_time <= 5.0)
 						ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_VULNERABLE_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
 					else
 						ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
