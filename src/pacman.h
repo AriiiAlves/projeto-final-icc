@@ -16,7 +16,7 @@
 #define PACMAN_SPRITE_ROWS 4               // Número de linhas na spritesheet (diferentes movimentos)
 #define GHOST_SPRITE_COLS 1                // Número de colunas na spritesheet
 #define GHOST_VULNERABLE_SPRITE_COLS 2     // Número de colunas na spritesheet
-#define GHOST_SPRITE_ROWS 4                // Número de linhas na spritesheet (diferentes movimentos)
+#define GHOST_SPRITE_ROWS 6                // Número de linhas na spritesheet (diferentes movimentos)
 #define PACMAN_V_0 5                       // Velocidade padrão do pacman
 #define GHOSTS_V_0 5.5                     // Velocidade padrão dos fantasmas
 #define MAPS_N 2                           // Número de mapas

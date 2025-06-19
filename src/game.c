@@ -291,7 +291,7 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 	al_draw_scaled_bitmap(pacman->sprite, pacman->frame * SPRITE_SIZE, pacman->movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(pacman->dyn.x-pacman->size), map->y_i+map->y_fac*(pacman->dyn.y-pacman->size), map->x_fac*(2*pacman->size), map->y_fac*(2*pacman->size), 0);
 	for (int i = 0; i < *ghosts_n; i++)
 		if (ghosts[i].vulnerable)
-			al_draw_scaled_bitmap(ghosts[i].sprite_vulnerable, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-ghosts[i].size), map->y_i+map->y_fac*(ghosts[i].dyn.y-ghosts[i].size), map->x_fac*(2*ghosts[i].size), map->y_fac*(2*ghosts[i].size), 0);
+			al_draw_scaled_bitmap(ghosts[i].sprite_vulnerable, ghosts[i].frame * SPRITE_SIZE, 0 * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-ghosts[i].size), map->y_i+map->y_fac*(ghosts[i].dyn.y-ghosts[i].size), map->x_fac*(2*ghosts[i].size), map->y_fac*(2*ghosts[i].size), 0);
 		else
 			al_draw_scaled_bitmap(ghosts[i].sprite, ghosts[i].frame * SPRITE_SIZE, ghosts[i].movement * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, map->x_i+map->x_fac*(ghosts[i].dyn.x-ghosts[i].size), map->y_i+map->y_fac*(ghosts[i].dyn.y-ghosts[i].size), map->x_fac*(2*ghosts[i].size), map->y_fac*(2*ghosts[i].size), 0);
 
@@ -314,7 +314,7 @@ void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, 
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 	Ghost* ghosts;
-	char *ghosts_path[4] = {"../../sprites/Ghost_Blue.png", "../../sprites/Ghost_Green.png", "../../sprites/Ghost_Purple.png", "../../sprites/Ghost_Red.png"};
+	char *ghosts_path[4] = {"../../sprites/ghost_blue.png", "../../sprites/ghost_green.png", "../../sprites/ghost_purple.png", "../../sprites/ghost_red.png"};
 	// Inicializa pacman e fantasmas, de acordo com o mapa
 	switch (map->id) {
 	default:
@@ -333,7 +333,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, GHOSTS_V_0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord){0, 0}, NULL, NULL};
 			ghosts[i].sprite = al_load_bitmap(ghosts_path[i%4]);
 			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Pac_Man.png");
-//			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Ghost_Vulnerable.png");
+			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/ghost_vulnerable.png");
 		}
 		// Centraliza os fantasmas
 		for (int i = 0; i < *ghosts_n; i++) {
@@ -362,7 +362,7 @@ Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n) {
 			ghosts[i] = (Ghost){(Dynamics){0.0, 0.0, GHOSTS_V_0, 0.0, 0.0, GHOSTS_V_0, 0, 0}, 0.51, false, 0, 0, (NodeCoord){0, 0}, NULL, NULL};
 			ghosts[i].sprite = al_load_bitmap(ghosts_path[i%4]);
 			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Pac_Man.png");
-//			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/Ghost_Vulnerable.png");
+			ghosts[i].sprite_vulnerable = al_load_bitmap("../../sprites/ghost_vulnerable.png");
 		}
 		// Inicializa a posição dos fantasmas
 		{
@@ -473,6 +473,10 @@ void move_ghosts (Map *map, NodeMap *nodemap, Ghost *ghosts, int *ghosts_n, Pacm
 	// Se o parâmetro for fora do escopo, ignora
 	if(pursuit_weight > 24 || pursuit_weight < 0)
 		pursuit_weight = 0;
+	
+	// Se os fantasmas estão vulneráveis, ao invés de se aproximar, buscam fugir
+	if (ghosts[0].vulnerable)
+		pursuit_weight = -24;
 
 	for (int i = 0; i < *ghosts_n; i++){
 		// Movimento inicial aleatório (direção qualquer)
