@@ -103,25 +103,25 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 		case ALLEGRO_EVENT_KEY_DOWN:
 			// Muda a direção do Pacman, mas não se for para cima de uma parede
 			if (ev->keyboard.keycode == ALLEGRO_KEY_UP || ev->keyboard.keycode == ALLEGRO_KEY_W)
-				if ((map->m[(int)(pacman.dyn.y-1)][(int)(pacman.dyn.x)] % 4)) {
+				if ((map->m[((int)(pacman.dyn.y-1)+map->w)%map->w][(int)(pacman.dyn.x)] % 4)) {
 					pacman.dyn.direction_x = 0;
 					pacman.dyn.direction_y = -1;
 					pacman.movement = 2; // 2 é cima
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT || ev->keyboard.keycode == ALLEGRO_KEY_A)
-				if ((map->m[(int)(pacman.dyn.y)][(int)(pacman.dyn.x-1)] % 4)) {
+				if ((map->m[(int)(pacman.dyn.y)][((int)(pacman.dyn.x-1)+map->h)%map->h] % 4)) {
 					pacman.dyn.direction_x = -1;
 					pacman.dyn.direction_y = 0;
 					pacman.movement = 1; // 1 é esquerda
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_DOWN || ev->keyboard.keycode == ALLEGRO_KEY_S)
-				if ((map->m[(int)(pacman.dyn.y+1)][(int)(pacman.dyn.x)] % 4)) {
+				if ((map->m[(int)(pacman.dyn.y+1)%map->h][(int)(pacman.dyn.x)] % 4)) {
 					pacman.dyn.direction_x = 0;
 					pacman.dyn.direction_y = 1;
 					pacman.movement = 3; // 3 é cima
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_RIGHT || ev->keyboard.keycode == ALLEGRO_KEY_D)
-				if ((map->m[(int)(pacman.dyn.y)][(int)(pacman.dyn.x+1)] % 4)) {
+				if ((map->m[(int)(pacman.dyn.y)][(int)(pacman.dyn.x+1)%map->w] % 4)) {
 					pacman.dyn.direction_x = 1;
 					pacman.dyn.direction_y = 0;
 					pacman.movement = 0; // 0 é direita
@@ -193,12 +193,12 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 			break;
 		case ALLEGRO_EVENT_TIMER:
 			// Atualiza a animação quando o tempo entre frames é atingido
-			*sprite_timer += 1.0 / FPS;
+			*sprite_timer += 0.5 / FPS;
 			// Muda os sprites
 			if (*sprite_timer >= *sprite_delay) {
 				pacman.frame = (pacman.frame + 1) % PACMAN_SPRITE_COLS; // Avança para o próximo frame (Pac man)
 				for (int i = 0; i < ghosts_n; i++) {
-					if (ghosts[i].vulnerable && vitamin_time <= 5.0)
+					if (ghosts[i].vulnerable && vitamin_time <= 3.0)
 						ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_VULNERABLE_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
 					else
 						ghosts[i].frame = (ghosts[i].frame + 1) % GHOST_SPRITE_COLS; // Avança para o próximo frame (Ghosts)
