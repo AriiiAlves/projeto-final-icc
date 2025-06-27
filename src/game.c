@@ -103,13 +103,13 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 		case ALLEGRO_EVENT_KEY_DOWN:
 			// Muda a direção do Pacman, mas não se for para cima de uma parede
 			if (ev->keyboard.keycode == ALLEGRO_KEY_UP || ev->keyboard.keycode == ALLEGRO_KEY_W)
-				if ((map->m[((int)(pacman.dyn.y-1)+map->w)%map->w][(int)(pacman.dyn.x)] % 4)) {
+				if ((map->m[((int)(pacman.dyn.y-1)+map->h)%map->h][(int)(pacman.dyn.x)] % 4)) {
 					pacman.dyn.direction_x = 0;
 					pacman.dyn.direction_y = -1;
 					pacman.movement = 2; // 2 é cima
 				}
 			if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT || ev->keyboard.keycode == ALLEGRO_KEY_A)
-				if ((map->m[(int)(pacman.dyn.y)][((int)(pacman.dyn.x-1)+map->h)%map->h] % 4)) {
+				if ((map->m[(int)(pacman.dyn.y)][((int)(pacman.dyn.x-1)+map->w)%map->w] % 4)) {
 					pacman.dyn.direction_x = -1;
 					pacman.dyn.direction_y = 0;
 					pacman.movement = 1; // 1 é esquerda
