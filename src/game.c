@@ -126,26 +126,7 @@ int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *ma
 					pacman.dyn.direction_y = 0;
 					pacman.movement = 0; // 0 é direita
 				}
-			// DEBUG, aka impaciência
-			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_PLUS) {
-				pacman.dyn.v += 1;
-				for(int i = 0; i < ghosts_n; i++) {
-					ghosts[i].dyn.v += 1;
-				}
-			}
-			if (ev->keyboard.keycode == ALLEGRO_KEY_PAD_MINUS) {
-				pacman.dyn.v -= 1;
-				for(int i = 0; i < ghosts_n; i++) {
-					ghosts[i].dyn.v -= 1;
-				}
-			}
-			if (ev->keyboard.keycode == ALLEGRO_KEY_EQUALS)
-				pacman.dyn.v += 1;
-			if (ev->keyboard.keycode == ALLEGRO_KEY_MINUS)
-				pacman.dyn.v -= 1;
-			// Pausa o jogo --> Todo
 			if (ev->keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-				//*running = false;
 				// Volta ao menu principal
 				game_running = false;
 			}
