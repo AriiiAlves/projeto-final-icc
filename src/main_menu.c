@@ -1,13 +1,17 @@
 #include"pacman.h"
 
+// Loop do menu principal
 int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_BITMAP *background) {
+	// Indica o próximo menu, quando deixar de ser -1
 	int next_menu = -1;
+	// Botões
 	int b_n = 3;
 	Button* b;
 	b = malloc(b_n * sizeof(Button));
 	b[0] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.35-0.05), height*(0.35+0.05), false};
 	b[1] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.46-0.05), height*(0.46+0.05), false};
 	b[2] = (Button){width*(0.5-0.2), width*(0.5+0.2), height*(0.57-0.05), height*(0.57+0.05), false};
+	// Mouse, atualização da tela e botão selecionado
 	int mouse_x, mouse_y;
 	bool redraw = false;
 	int select = -1;
@@ -35,6 +39,7 @@ int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 				if (b[i].hover)
 					next_menu = i+1;
 			break;
+		// Os botões também podem ser selcionados com as setas do teclado
 		case ALLEGRO_EVENT_KEY_DOWN:
 			if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT || ev->keyboard.keycode == ALLEGRO_KEY_UP) {
 				if (select < 0)
@@ -58,15 +63,18 @@ int main_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 				if (select >= 0)
 					next_menu = select+1;
 			break;
+		// Lida com o tempo
 		case ALLEGRO_EVENT_TIMER:
 			redraw = true; // Marca que a tela precisa ser redesenhada
 			break;
 		}
+		// Atualiza a tela
 		if (redraw && al_is_event_queue_empty(*queue)) {
 			main_menu_show(&font, &title_font, b, &b_n, &select, &background, width, height);
 			redraw = false;
 		}
 	}
+	// Desaloca os botões e muda o menu/começa o jogo
 	free(b);
 	return next_menu;
 }
@@ -79,9 +87,11 @@ void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Butto
 	// Imagem de fundo
 	al_draw_scaled_bitmap(*background, 0, 0, al_get_bitmap_width(*background), al_get_bitmap_height(*background), 0, 0, width, height, 0);
 
+	// Cores dos botões
 	ALLEGRO_COLOR b_color = al_map_rgb(255, 255, 102),
 		      b_color_hover = al_map_rgb(204, 204, 0);
 
+	// Botões
 	if (*select >= 0)
 		al_draw_filled_rounded_rectangle(b[*select].x_i, b[*select].y_i, b[*select].x_f, b[*select].y_f, 10, 10, b_color_hover);
 	for (int i = 0; i < *b_n; i++)
@@ -90,7 +100,7 @@ void main_menu_show (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, const Butto
 		else if (*select != i)
 			al_draw_filled_rounded_rectangle(b[i].x_i, b[i].y_i, b[i].x_f, b[i].y_f, 10, 10, b_color);
 	al_draw_text(*title_font, al_map_rgb(255, 255, 102), (b[0].x_i+b[0].x_f)/2, (b[0].y_i+b[0].y_f)/2*0.5, ALLEGRO_ALIGN_CENTER, "Pac Man");
-
+	// Textos dos botões
 	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[0].x_i+b[0].x_f)/2, (b[0].y_i+b[0].y_f)/2, ALLEGRO_ALIGN_CENTER, "Start");
 	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[1].x_i+b[1].x_f)/2, (b[1].y_i+b[1].y_f)/2, ALLEGRO_ALIGN_CENTER, "Maps");
 	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[2].x_i+b[2].x_f)/2, (b[2].y_i+b[2].y_f)/2, ALLEGRO_ALIGN_CENTER, "Quit");

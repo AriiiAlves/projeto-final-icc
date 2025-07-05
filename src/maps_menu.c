@@ -3,9 +3,10 @@
 int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, ALLEGRO_FONT *font, int width, int height, Map *map) {
 	int next_menu = -1;
 	int map_sel = 0;
-	int maps_n = MAPS_N;
-	char *names[MAPS_N] = {"Original", "Dungeon"};
+	int maps_n = MAPS_N; // Pega o número do #define e coloca em uma variável, por facilidade
+	char *names[MAPS_N] = {"Original", "Dungeon"}; // Nomes dos mapas existente (para exibição)
 
+	// Botões
 	Button* b = malloc((maps_n + 3) * sizeof(Button));
 	for (int i = 0; i < maps_n; i++)
 		b[i] = (Button){width*(0.08-0.02+0.07*i), width*(0.08+0.02+0.07*i), height*(0.03-0.02), height*(0.03+0.02), false};
@@ -36,7 +37,7 @@ int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 			b[maps_n+2].hover = (mouse_x >= b[maps_n+2].x_i && mouse_y <= (b[maps_n+2].y_f - incl_2 * (mouse_x - b[maps_n+2].x_i)) && mouse_y >= (b[maps_n+2].y_i + incl_2 * (mouse_x - b[maps_n+2].x_i)));
 			break;
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-			// Ao clicar sobre o botão, vai seleciona o mapa correspondente e volta para o menu principal
+			// Ao clicar sobre o botão, seleciona o mapa correspondente e volta para o menu principal
 			for (int i = 0; i < maps_n; i++)
 				if (b[i].hover) {
 					map_sel = i;
@@ -51,6 +52,7 @@ int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 					map_sel -= maps_n;
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
+			// Seleciona o mapa também com as setas do teclado
 			if (ev->keyboard.keycode == ALLEGRO_KEY_LEFT)
 				if (--map_sel < 0)
 					map_sel += maps_n;
@@ -69,6 +71,7 @@ int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 		if (map->id != map_sel) {
 			free_map(map);
 			get_map(map_sel, map);
+			// Calcula o tamanho do mapa, de acordo com o espaço definido, lidando com qualquer tamanho possível de mapa (independente se x ou y muito grandes)
 			if (0.86 * height * map->w / map->h <= 0.9 * width) {
 				map->y_i = height*(0.5-0.43);
 				map->y_f = height*(0.5+0.43);
@@ -85,6 +88,7 @@ int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 				map->y_fac = 1.0*(map->y_f - map->y_i)/map->h;
 			}
 		}
+		// Atualiza a tela
 		if (redraw && al_is_event_queue_empty(*queue)) {
 			maps_menu_show(&font, b, &maps_n, &map_sel, map, names);
 			redraw = false;
@@ -99,9 +103,11 @@ int maps_menu (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, AL
 void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *maps_n, const int *map_sel, Map *map, char **names) {
 	al_clear_to_color(al_map_rgb(30, 40, 30));
 
+	// Cores dos botões
 	ALLEGRO_COLOR b_color = al_map_rgb(255, 255, 255),
 		      b_color_sel = al_map_rgb(0, 0, 0);
 
+	// Desenha os botões
 	char number[12];
 	for (int i = 0; i < *maps_n; i++) {
 		if (i == *map_sel) {
@@ -114,6 +120,7 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *maps_n, co
 			al_draw_text(*font, b_color_sel, (b[i].x_i+b[i].x_f)/2, (b[i].y_i+b[i].y_f)/2, ALLEGRO_ALIGN_CENTER, number);
 		}
 	}
+	// Ainda botões
 	al_draw_filled_triangle(b[*maps_n+1].x_f, b[*maps_n+1].y_i, b[*maps_n+1].x_f, b[*maps_n+1].y_f, b[*maps_n+1].x_i, (b[*maps_n+1].y_i+b[*maps_n+1].y_f)/2, b_color);
 	al_draw_filled_triangle(b[*maps_n+2].x_i, b[*maps_n+2].y_i, b[*maps_n+2].x_i, b[*maps_n+2].y_f, b[*maps_n+2].x_f, (b[*maps_n+2].y_i+b[*maps_n+2].y_f)/2, b_color);
 
@@ -122,6 +129,7 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *maps_n, co
 	al_draw_filled_rectangle(b[*maps_n].x_i, b[*maps_n].y_i, b[*maps_n].x_f, b[*maps_n].y_f, b_color);
 	al_draw_text(*font, al_map_rgb(0, 0, 0), (b[*maps_n].x_i+b[*maps_n].x_f)/2, (b[*maps_n].y_i+b[*maps_n].y_f)/2, ALLEGRO_ALIGN_CENTER, "Select");
 
+	// Cores para cada elemento do mapa
 	ALLEGRO_COLOR wall = al_map_rgb(0, 10, 100),
 		      door = al_map_rgb(40, 80, 150),
 		      empty = al_map_rgb(10, 10, 12),

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Variáveis de controle em fácil acesso
 #define SPRITE_SIZE 32                     // Tamanho (largura e altura) de cada frame do sprite
 #define PACMAN_SPRITE_COLS 9               // Número de colunas na spritesheet
 #define PACMAN_SPRITE_ROWS 4               // Número de linhas na spritesheet (diferentes movimentos)
@@ -89,6 +90,7 @@ struct NodeMap {
 	int w, h;      // Dimensões da matriz (= dimensões do mapa)
 };
 
+// Função utilizadas
 void start (ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, ALLEGRO_TIMER **timer, int *width, int *height);
 
 bool load_media (ALLEGRO_FONT **font, ALLEGRO_FONT **title_font, ALLEGRO_SAMPLE **menu_sample, ALLEGRO_SAMPLE **game_sample, ALLEGRO_BITMAP **background);
@@ -103,7 +105,7 @@ void maps_menu_show (ALLEGRO_FONT **font, const Button *b, const int *maps_n, co
 
 Ghost* get_entities (Map *map, Pacman *pacman, int *ghosts_n);
 
-int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, double *sprite_timer, double *sprite_delay, int *menu_id);
+int game (ALLEGRO_EVENT *ev, ALLEGRO_EVENT_QUEUE **queue, bool *running, Map *map, NodeMap *nodemap, ALLEGRO_FONT *title_font, int width, int height, ALLEGRO_TIMER **timer, int *menu_id);
 
 void game_show (Map *map, ALLEGRO_FONT **font, const Button *b, const int *b_n, const int *select, Pacman *pacman, Ghost *ghosts, const int *ghosts_n, int *width, int *height, bool *lost_life, bool *win);
 
